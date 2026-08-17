@@ -1,0 +1,13 @@
+# Configuración sensible — NO subir a git
+config/sites.php
+config/auth.php
+
+# Datos locales
+data/
+
+# Vendor (si se genera)
+vendor/
+
+# Sistema
+.DS_Store
+*.log
