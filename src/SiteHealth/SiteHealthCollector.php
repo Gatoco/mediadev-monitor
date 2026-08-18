@@ -31,7 +31,7 @@ final class SiteHealthCollector
     /** @return array{score: ?int, tests: array, unavailable: bool} */
     public function collect(Site $site): array
     {
-        $auth = $this->basicAuth($site);
+        $auth = $site->basicAuth();
         $endpoint = rtrim($site->url, '/') . '/wp-json/wp-site-health/v1/tests';
 
         $response = $this->client->get($endpoint, $auth);
@@ -69,10 +69,8 @@ final class SiteHealthCollector
 
     private function basicAuth(Site $site): ?string
     {
-        if ($site->apToken === null) {
-            return null;
-        }
-        return 'application_password_user:' . $site->apToken;
+        // Deprecated: usar Site::basicAuth() directamente.
+        return $site->basicAuth();
     }
 
     private function persist(Site $site, ?int $score, array $tests, bool $unavailable): void

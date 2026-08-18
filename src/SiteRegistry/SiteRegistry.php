@@ -28,10 +28,25 @@ final class Site
         public readonly string $url,
         public readonly string $name,
         public readonly string $type,
+        public readonly ?string $wpUser,
         public readonly ?string $apToken,
         public readonly int $consecutiveFailures,
         public readonly SiteState $state,
     ) {
+    }
+
+    /**
+     * Devuelve el string Basic Auth para curl cuando el sitio tiene AP, o null si no.
+     * Formato WP Application Passwords: "wp_user:token" (sin espacios en el token).
+     */
+    public function basicAuth(): ?string
+    {
+        if ($this->apToken === null || $this->apToken === '') {
+            return null;
+        }
+        $user = $this->wpUser ?? 'admin';
+        $token = str_replace(' ', '', $this->apToken);
+        return $user . ':' . $token;
     }
 }
 
@@ -49,11 +64,12 @@ final class SiteRegistry
     private function syncFromConfig(): void
     {
         $stmt = $this->pdo->prepare(
-            'INSERT INTO sites (url, name, type, ap_token)
-             VALUES (:url, :name, :type, :token)
+            'INSERT INTO sites (url, name, type, wp_user, ap_token)
+             VALUES (:url, :name, :type, :wp_user, :token)
              ON CONFLICT(url) DO UPDATE SET
                 name = excluded.name,
                 type = excluded.type,
+                wp_user = excluded.wp_user,
                 ap_token = excluded.ap_token,
                 updated_at = datetime(\'now\')'
         );
@@ -63,6 +79,7 @@ final class SiteRegistry
                 'url' => $site['url'],
                 'name' => $site['name'],
                 'type' => $site['type'],
+                'wp_user' => $site['wp_user'] ?? null,
                 'token' => $site['token'] ?? null,
             ]);
         }
@@ -106,6 +123,7 @@ final class SiteRegistry
             url: $row['url'],
             name: $row['name'],
             type: $row['type'],
+            wpUser: $row['wp_user'] ?? null,
             apToken: $row['ap_token'] ?: null,
             consecutiveFailures: (int) $row['consecutive_failures'],
             state: SiteState::tryFrom($row['current_state']) ?? SiteState::UNKNOWN,

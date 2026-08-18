@@ -26,7 +26,7 @@ final class Config
             ?: $this->root . '/data/mediadev.sqlite';
     }
 
-    /** @return array<int, array{url:string, name:string, type:string, token:?string}> */
+    /** @return array<int, array{url:string, name:string, type:string, wp_user:?string, token:?string}> */
     public function sites(): array
     {
         $file = $this->root . '/config/sites.php';

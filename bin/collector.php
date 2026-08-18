@@ -32,7 +32,7 @@ $report = $collector->runAll($mode);
 foreach ($report->sites as $siteReport) {
     printf(
         "%-32s %-12s %s\n",
-        $siteReport->name,
+        $siteReport->site->name,
         $siteReport->state->value,
         $siteReport->state === \MediadevMonitor\SiteRegistry\SiteState::DOWN ? 'DOWN' : ''
     );

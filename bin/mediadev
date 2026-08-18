@@ -17,6 +17,7 @@ declare(strict_types=1);
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 use MediadevMonitor\Cli\Reporter;
+use MediadevMonitor\Collector\CollectionReport;
 use MediadevMonitor\Collector\Collector;
 use MediadevMonitor\Infra\Config;
 use MediadevMonitor\SiteRegistry\SiteRegistry;
@@ -36,20 +37,21 @@ switch ($command) {
         if ($target === null || $target === 'all') {
             $report = $collector->runAll('deep');
         } else {
-            $registry = new SiteRegistry($config->dbPath());
+            $registry = new SiteRegistry($config);
             $site = $registry->findByUrl($target);
             if ($site === null) {
                 fwrite(STDERR, "Sitio no encontrado: $target\n");
                 exit(2);
             }
-            $report = $collector->runOne($site);
+            $siteReport = $collector->runOne($site);
+            $report = new CollectionReport([$siteReport]);
         }
 
         echo (new Reporter())->render($report);
         exit($report->hasCritical() ? 1 : 0);
 
     case 'list':
-        $registry = new SiteRegistry($config->dbPath());
+        $registry = new SiteRegistry($config);
         $sites = $registry->all();
         foreach ($sites as $site) {
             printf("%-4d %-40s %-8s\n", $site->id, $site->url, $site->type);

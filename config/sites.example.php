@@ -10,6 +10,7 @@
  * Usuarios → Perfil → Application Passwords (WP 5.6+)
  *
  * type: 'auto' (detección automática) | 'wp' (forzar WordPress) | 'non-wp' (forzar no-WP)
+ * wp_user: nombre del usuario WP del que se generó el Application Password (necesario para Basic Auth)
  */
 
 return [
@@ -18,7 +19,8 @@ return [
         'url'   => 'https://mediadev.cl',
         'name'  => 'MediaDev',
         'type'  => 'auto',
-        'token' => '', // Application Password del usuario del sitio
+        'wp_user' => 'admin', // usuario WP del que se generó el Application Password
+        'token' => '', // Application Password (24 caracteres, sin espacios)
     ],
 
     // Ejemplo — sitio no-WordPress (solo uptime)
@@ -26,6 +28,7 @@ return [
         'url'   => 'https://ejemplo-no-wp.cl',
         'name'  => 'Sitio estático',
         'type'  => 'non-wp',
+        'wp_user' => null,
         'token' => null,
     ],
 ];

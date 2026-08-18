@@ -27,7 +27,7 @@ final class ActivityCollector
     /** @return array{posts: array, unavailable: bool} */
     public function collect(Site $site, int $limit = 5): array
     {
-        $auth = $this->basicAuth($site);
+        $auth = $site->basicAuth();
         $endpoint = rtrim($site->url, '/') . '/wp-json/wp/v2/posts?per_page=' . $limit;
 
         $response = $this->client->get($endpoint, $auth);
@@ -51,10 +51,8 @@ final class ActivityCollector
 
     private function basicAuth(Site $site): ?string
     {
-        if ($site->apToken === null) {
-            return null;
-        }
-        return 'application_password_user:' . $site->apToken;
+        // Deprecated: usar Site::basicAuth() directamente.
+        return $site->basicAuth();
     }
 
     private function persist(Site $site, array $posts, bool $unavailable): void

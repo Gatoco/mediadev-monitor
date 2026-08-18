@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS sites (
     url                  TEXT NOT NULL UNIQUE,
     name                 TEXT NOT NULL,
     type                 TEXT NOT NULL DEFAULT 'auto',
+    wp_user              TEXT,
     ap_token             TEXT,
     consecutive_failures INTEGER NOT NULL DEFAULT 0,
     current_state        TEXT NOT NULL DEFAULT 'unknown',
@@ -99,5 +100,22 @@ CREATE TABLE IF NOT EXISTS session (
     expires_at TEXT NOT NULL
 );
 SQL);
+
+        // Migraciones incrementales: añade columnas nuevas si la tabla ya existía
+        // de una versión anterior del esquema. Idempotente (ignora si la columna ya existe).
+        $this->tryAlter('sites', 'wp_user', 'TEXT');
+    }
+
+    /** ALTER TABLE idempotente — no falla si la columna ya existe (SQLite duplica error). */
+    private function tryAlter(string $table, string $column, string $type): void
+    {
+        try {
+            $this->pdo->exec(sprintf('ALTER TABLE %s ADD COLUMN %s %s', $table, $column, $type));
+        } catch (\PDOException $e) {
+            // "duplicate column name" → la columna ya existe, no es error
+            if (stripos($e->getMessage(), 'duplicate column') === false) {
+                throw $e;
+            }
+        }
     }
 }

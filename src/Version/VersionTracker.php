@@ -18,7 +18,7 @@ use PDO;
 
 final class VersionTracker
 {
-    private const FALLBACK_WP_VERSION = '7.0.4';
+    private const FALLBACK_WP_VERSION = '6.6.2';
     private const CACHE_FILE = 'wp-latest-version.cache.json';
     private const CACHE_TTL = 86400; // 24h
 
@@ -34,14 +34,13 @@ final class VersionTracker
 
     public function collect(Site $site): array
     {
-        $auth = $this->basicAuth($site);
+        $auth = $site->basicAuth();
         $base = rtrim($site->url, '/');
 
-        $core = $this->client->get($base . '/wp-json/', $auth)->json();
-        $coreVersion = $core['name'] ?? null; // índice expone la versión en 'name'? No: usar /wp-json/ no da versión.
-        // La versión de WP core se obtiene del índice REST (campo 'name' es el nombre del sitio).
-        // Fallback: intentar el endpoint de plugins para inferir o usar Site Health.
-        // Para MVP: leer del header o del meta generator via uptime es costoso; usar snapshot JSON.
+        // La versión de WP core NO está en /wp-json/. La inferimos del HTML del
+        // home: <meta name="generator" content="WordPress X.Y.Z">. Fallbacks:
+        // header X-Powered-By (a menudo deshabilitado por hardening) y Link rel.
+        $coreVersion = $this->detectCoreVersion($base, $auth);
 
         $plugins = $this->client->get($base . '/wp-json/wp/v2/plugins?per_page=100', $auth)->json();
         $themes = $this->client->get($base . '/wp-json/wp/v2/themes?per_page=100', $auth)->json();
@@ -51,6 +50,53 @@ final class VersionTracker
         $this->persist($site, $coreVersion, $plugins, $themes, $severity);
 
         return ['severity' => $severity, 'core' => $coreVersion];
+    }
+
+    /**
+     * Detecta la versión de WP core desde el HTML del home.
+     * Busca en este orden:
+     *  1. Header X-Powered-By "WordPress/X.Y.Z" (caso ideal, a menudo deshabilitado)
+     *  2. <meta name="generator" content="WordPress X.Y.Z"> en el <head> del home
+     *  3. Feed RSS /feed/ — tag <generator>https://wordpress.org/?v=X.Y.Z</generator>
+     *  4. Header Link rel="https://api.w.org/" (solo confirma WP, no da versión → null)
+     *
+     * Devuelve null si no se puede determinar (el sitio oculta la versión, práctica
+     * común de hardening). En ese caso assess() no puede marcar core desactualizado.
+     */
+    public function detectCoreVersion(string $base, ?string $auth): ?string
+    {
+        $response = $this->client->get($base . '/', $auth);
+
+        // 1. Header X-Powered-By (caso ideal)
+        foreach ($response->headers as $name => $value) {
+            if (strcasecmp($name, 'X-Powered-By') === 0 && preg_match('#WordPress/\s*([\d.]+)#i', $value, $m)) {
+                return $m[1];
+            }
+        }
+
+        // 2. <meta name="generator"> en el HTML (caso más común)
+        if ($response->status >= 200 && $response->status < 300) {
+            $html = $response->body;
+            // Solo scrapear el <head> para no consumir todo el body
+            $headEnd = stripos($html, '</head>');
+            $head = $headEnd !== false ? substr($html, 0, $headEnd) : $html;
+            if (preg_match('#<meta[^>]+name\s*=\s*["\']generator["\'][^>]+content\s*=\s*["\']([^"\']+)["\']#i', $head, $m)) {
+                if (preg_match('#WordPress\s+([\d.]+)#i', $m[1], $v)) {
+                    return $v[1];
+                }
+            }
+        }
+
+        // 3. Feed RSS — tag <generator>https://wordpress.org/?v=X.Y.Z</generator>
+        $feed = $this->client->get($base . '/feed/', $auth);
+        if ($feed->status >= 200 && $feed->status < 300) {
+            // El feed es XML; buscar el tag <generator> con atributo url o texto
+            if (preg_match('#<generator[^>]*>\s*(https?://wordpress\.org/\?v=)?([\d.]+)\s*</generator>#i', $feed->body, $m)) {
+                return $m[2];
+            }
+        }
+
+        return null;
     }
 
     /** Evalúa severidad: core rojo, plugins/temas amarillo, todo al día verde. */
@@ -103,10 +149,8 @@ final class VersionTracker
 
     private function basicAuth(Site $site): ?string
     {
-        if ($site->apToken === null) {
-            return null;
-        }
-        return 'application_password_user:' . $site->apToken;
+        // Deprecated: usar Site::basicAuth() directamente.
+        return $site->basicAuth();
     }
 
     private function persist(Site $site, ?string $coreVersion, array $plugins, array $themes, string $severity): void
