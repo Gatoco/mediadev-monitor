@@ -24,6 +24,7 @@ final class Dashboard
     /** @return array<int, array<string, mixed>> */
     public function overview(): array
     {
+        // ponytail: N+1 (3 queries por sitio) — SQLite local con ~28 sitios, imperceptible.
         return array_map(fn (array $row) => [
             'id' => (int) $row['id'],
             'url' => $row['url'],
@@ -33,7 +34,8 @@ final class Dashboard
             'semaphore' => $this->semaphore($row['current_state']),
             'consecutive_failures' => (int) $row['consecutive_failures'],
             'last_uptime' => $this->lastUptime((int) $row['id']),
-            'last_severity' => $this->lastSeverity((int) $row['id']),
+            'last_version' => $this->lastVersionSummary((int) $row['id']),
+            'health_score' => $this->lastHealthScore((int) $row['id']),
         ], $this->pdo->query('SELECT * FROM sites ORDER BY name')->fetchAll());
     }
 
@@ -64,7 +66,7 @@ final class Dashboard
         // instanciar SiteRegistry solo por esto sería más código que comparar strings.
         return match ($state) {
             'down' => 'red',
-            'non-wp', 'unknown' => 'yellow',
+            'non-wp', 'unknown', 'wp-degraded' => 'yellow',
             default => 'green',
         };
     }
@@ -87,6 +89,36 @@ final class Dashboard
         $stmt->execute([$siteId]);
         $row = $stmt->fetch();
         return $row['severity'] ?? null;
+    }
+
+    /** Resumen compacto para la fila del overview: core + conteo de updates pendientes. */
+    private function lastVersionSummary(int $siteId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT core_version, pending_json, severity FROM version_snapshots WHERE site_id = ? ORDER BY ts DESC LIMIT 1'
+        );
+        $stmt->execute([$siteId]);
+        $row = $stmt->fetch();
+        if ($row === false) {
+            return null;
+        }
+        $pending = json_decode($row['pending_json'] ?? '[]', true);
+        return [
+            'core' => $row['core_version'] ?? null,
+            'severity' => $row['severity'] ?? null,
+            'pending_plugins' => count($pending['plugins'] ?? []),
+            'pending_themes' => count($pending['themes'] ?? []),
+        ];
+    }
+
+    private function lastHealthScore(int $siteId): ?int
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT score FROM site_health_snapshots WHERE site_id = ? ORDER BY ts DESC LIMIT 1'
+        );
+        $stmt->execute([$siteId]);
+        $row = $stmt->fetch();
+        return $row === false ? null : (int) $row['score'];
     }
 
     /** @return array<int, array<string, mixed>> */
