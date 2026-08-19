@@ -31,26 +31,20 @@ $site = $detail['site'];
 $version = $detail['last_version'];
 $health = $detail['last_health'];
 $activity = $detail['last_activity'];
+
+$pageTitle = $site['name'];
+$activeFilter = $detail['semaphore'];
+$counts = ['red' => 0, 'yellow' => 0, 'green' => 0];
+$counts[$detail['semaphore']] = 1;
+$lastCheck = $detail['uptime_history'][0]['ts'] ?? null;
+$autoRefresh = true;
+require __DIR__ . '/layout.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($site['name']) ?> — Mediadev Monitor</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="view-site">
-    <header>
-        <h1><a href="index.php" style="text-decoration:none">🔭</a> <?= htmlspecialchars($site['name']) ?></h1>
-        <a href="index.php">← Dashboard</a>
-    </header>
-    <main>
-        <div class="card">
+        <div class="detail-head">
             <span class="dot <?= $detail['semaphore'] ?>"></span>
             <strong><?= htmlspecialchars($site['current_state']) ?></strong>
             — <a href="<?= htmlspecialchars($site['url']) ?>"><?= htmlspecialchars($site['url']) ?></a>
-            <br><small>Fallos consecutivos: <?= (int) $site['consecutive_failures'] ?></small>
+            <span class="detail-fail">Fallos consecutivos: <?= (int) $site['consecutive_failures'] ?></span>
         </div>
 
         <div class="card">
@@ -135,5 +129,6 @@ $activity = $detail['last_activity'];
             <?php endif; ?>
         </div>
     </main>
+</div>
 </body>
 </html>

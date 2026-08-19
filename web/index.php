@@ -22,68 +22,30 @@ $dashboard = new Dashboard($config);
 $sites = $dashboard->overview();
 
 // Orden: caídos primero, luego degradados, luego por nombre.
-usort($sites, fn ($a, $b) => [$a['semaphore'] === 'red' ? 0 : 1, $a['semaphore'] === 'yellow' ? 0 : 1, $a['name']]
-    <=> [$b['semaphore'] === 'red' ? 0 : 1, $b['semaphore'] === 'yellow' ? 0 : 1, $b['name']]);
+$rank = fn (array $s) => $s['semaphore'] === 'red' ? 0 : ($s['semaphore'] === 'yellow' ? 1 : 2);
+usort($sites, fn ($a, $b) => [$rank($a), $a['name']] <=> [$rank($b), $b['name']]);
 
 $counts = ['red' => 0, 'yellow' => 0, 'green' => 0];
+$lastCheck = null;
 foreach ($sites as $s) {
     $counts[$s['semaphore']]++;
+    if (($s['last_uptime']['ts'] ?? null) > ($lastCheck ?? '')) {
+        $lastCheck = $s['last_uptime']['ts'];
+    }
 }
 
 $filter = $_GET['filter'] ?? 'all';
+$filter = in_array($filter, ['all', 'red', 'yellow', 'green'], true) ? $filter : 'all';
 $visible = $filter === 'all' ? $sites : array_values(array_filter($sites, fn ($s) => $s['semaphore'] === $filter));
 
-/** Timestamp SQLite → "hace X min" */
-function relTime(?string $ts): string
-{
-    if ($ts === null || $ts === '') {
-        return '—';
-    }
-    $diff = time() - strtotime($ts);
-    if ($diff < 60) {
-        return 'hace <1 min';
-    }
-    if ($diff < 3600) {
-        return 'hace ' . intdiv($diff, 60) . ' min';
-    }
-    if ($diff < 86400) {
-        return 'hace ' . intdiv($diff, 3600) . ' h';
-    }
-    return 'hace ' . intdiv($diff, 86400) . ' d';
-}
+$pageTitle = 'Dashboard';
+$activeFilter = $filter;
+$autoRefresh = true;
+require __DIR__ . '/layout.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mediadev Monitor — Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <meta http-equiv="refresh" content="60">
-</head>
-<body class="view-index">
-    <header>
-        <h1>🔭 Mediadev Monitor</h1>
-        <div class="header-right">
-            <span class="last-update">Actualizado <?= relTime($sites[0]['last_uptime']['ts'] ?? null) ?></span>
-            <a href="logout.php">Cerrar sesión</a>
-        </div>
-    </header>
-    <main>
-        <div class="stats">
-            <a class="stat <?= $filter === 'all' ? 'active' : '' ?>" href="?filter=all">
-                <b><?= count($sites) ?></b>sitios
-            </a>
-            <a class="stat stat-red <?= $filter === 'red' ? 'active' : '' ?>" href="?filter=red">
-                <b><?= $counts['red'] ?></b>caídos
-            </a>
-            <a class="stat stat-yellow <?= $filter === 'yellow' ? 'active' : '' ?>" href="?filter=yellow">
-                <b><?= $counts['yellow'] ?></b>degradados
-            </a>
-            <a class="stat stat-green <?= $filter === 'green' ? 'active' : '' ?>" href="?filter=green">
-                <b><?= $counts['green'] ?></b>ok
-            </a>
-        </div>
+        <?php if ($visible === []): ?>
+            <p class="empty">No hay sitios en este estado.</p>
+        <?php endif; ?>
 
         <div class="site-grid">
             <?php foreach ($visible as $site): ?>
@@ -124,10 +86,7 @@ function relTime(?string $ts): string
             </a>
             <?php endforeach; ?>
         </div>
-
-        <?php if ($visible === []): ?>
-            <p class="empty">No hay sitios en este estado.</p>
-        <?php endif; ?>
     </main>
+</div>
 </body>
 </html>
