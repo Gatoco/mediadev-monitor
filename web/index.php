@@ -27,25 +27,9 @@ $sites = $dashboard->overview();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mediadev Monitor — Dashboard</title>
-    <style>
-        body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; }
-        header { background: #1e293b; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { font-size: 1.2rem; margin: 0; }
-        header a { color: #94a3b8; text-decoration: none; font-size: .9rem; }
-        main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; }
-        th, td { padding: .8rem 1rem; text-align: left; border-bottom: 1px solid #334155; }
-        th { background: #0f172a; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
-        tr:hover td { background: #24344d; }
-        .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .5rem; }
-        .red { background: #ef4444; } .yellow { background: #f59e0b; } .green { background: #22c55e; }
-        a.site { color: #38bdf8; text-decoration: none; }
-        .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-        .stat { background: #1e293b; border-radius: 10px; padding: 1rem 1.5rem; flex: 1; text-align: center; }
-        .stat b { display: block; font-size: 1.8rem; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="view-index">
     <header>
         <h1>🔭 Mediadev Monitor</h1>
         <a href="logout.php">Cerrar sesión</a>

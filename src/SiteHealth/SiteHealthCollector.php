@@ -67,12 +67,6 @@ final class SiteHealthCollector
         return $total > 0 ? (int) round(($passed / $total) * 100) : 0;
     }
 
-    private function basicAuth(Site $site): ?string
-    {
-        // Deprecated: usar Site::basicAuth() directamente.
-        return $site->basicAuth();
-    }
-
     private function persist(Site $site, ?int $score, array $tests, bool $unavailable): void
     {
         $stmt = $this->pdo->prepare(

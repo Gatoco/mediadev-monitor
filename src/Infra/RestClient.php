@@ -22,11 +22,6 @@ final class RestResponse
     ) {
     }
 
-    public function ok(): bool
-    {
-        return $this->status >= 200 && $this->status < 300;
-    }
-
     /** @return array<mixed> */
     public function json(): array
     {
@@ -37,37 +32,34 @@ final class RestResponse
 
 final class RestClient
 {
-    public function __construct(
-        private int $timeoutMs = 10000,
-        private int $maxRetries = 2,
-    ) {
-    }
+    private const TIMEOUT_MS = 10000;
+    private const MAX_RETRIES = 2;
 
     public function get(string $url, ?string $basicAuth = null): RestResponse
     {
         $attempt = 0;
         do {
-            $response = $this->request('GET', $url, $basicAuth);
+            $response = $this->request($url, $basicAuth);
             if ($response->status !== 0) {
                 return $response;
             }
             $attempt++;
-            if ($attempt <= $this->maxRetries) {
+            if ($attempt <= self::MAX_RETRIES) {
                 usleep(500_000 * $attempt); // backoff: 500ms, 1s
             }
-        } while ($attempt <= $this->maxRetries);
+        } while ($attempt <= self::MAX_RETRIES);
 
         return $response;
     }
 
-    private function request(string $method, string $url, ?string $basicAuth): RestResponse
+    private function request(string $url, ?string $basicAuth): RestResponse
     {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADER => true,
-            CURLOPT_TIMEOUT_MS => $this->timeoutMs,
-            CURLOPT_CONNECTTIMEOUT_MS => $this->timeoutMs,
+            CURLOPT_TIMEOUT_MS => self::TIMEOUT_MS,
+            CURLOPT_CONNECTTIMEOUT_MS => self::TIMEOUT_MS,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 3,
             CURLOPT_USERAGENT => 'MediadevMonitor/0.1 (+https://github.com/Gatoco/mediadev-monitor)',

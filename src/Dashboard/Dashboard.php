@@ -10,7 +10,6 @@ namespace MediadevMonitor\Dashboard;
 
 use MediadevMonitor\Infra\Config;
 use MediadevMonitor\Infra\Sqlite;
-use MediadevMonitor\SiteRegistry\SiteState;
 use PDO;
 
 final class Dashboard
@@ -60,9 +59,12 @@ final class Dashboard
 
     private function semaphore(string $state): string
     {
+        // Literales a propósito: SiteState enum vive en SiteRegistry.php (mismo
+        // archivo que Site) y el autoloader PSR-4 no lo resuelve por nombre aquí;
+        // instanciar SiteRegistry solo por esto sería más código que comparar strings.
         return match ($state) {
-            SiteState::DOWN->value => 'red',
-            SiteState::NON_WP->value, SiteState::UNKNOWN->value => 'yellow',
+            'down' => 'red',
+            'non-wp', 'unknown' => 'yellow',
             default => 'green',
         };
     }

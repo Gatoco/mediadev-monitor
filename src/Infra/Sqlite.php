@@ -3,7 +3,7 @@
 /**
  * Mediadev Monitor — Infra: SQLite (PDO) con migración idempotente.
  *
- * Crea las 7 tablas del esquema en el primer uso.
+ * Crea las 5 tablas del esquema en el primer uso.
  * Ruta configurable via MEDIADEV_DB_PATH.
  */
 
@@ -86,36 +86,6 @@ CREATE TABLE IF NOT EXISTS activity_snapshots (
     ts         TEXT NOT NULL DEFAULT (datetime('now')),
     posts_json TEXT
 );
-
-CREATE TABLE IF NOT EXISTS users (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    username      TEXT NOT NULL UNIQUE,
-    password_hash TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS session (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token      TEXT NOT NULL UNIQUE,
-    expires_at TEXT NOT NULL
-);
 SQL);
-
-        // Migraciones incrementales: añade columnas nuevas si la tabla ya existía
-        // de una versión anterior del esquema. Idempotente (ignora si la columna ya existe).
-        $this->tryAlter('sites', 'wp_user', 'TEXT');
-    }
-
-    /** ALTER TABLE idempotente — no falla si la columna ya existe (SQLite duplica error). */
-    private function tryAlter(string $table, string $column, string $type): void
-    {
-        try {
-            $this->pdo->exec(sprintf('ALTER TABLE %s ADD COLUMN %s %s', $table, $column, $type));
-        } catch (\PDOException $e) {
-            // "duplicate column name" → la columna ya existe, no es error
-            if (stripos($e->getMessage(), 'duplicate column') === false) {
-                throw $e;
-            }
-        }
     }
 }

@@ -1,0 +1,42 @@
+/* Mediadev Monitor — estilos compartidos (extraído de los <style> inline).
+ * Scoping: cada vista marca <body class="view-*"> porque comparten selectores
+ * con valores DIFERENTES (.card, .dot, body, table, th/td). Reglas globales
+ * primero, luego las específicas por vista. No cambiar valores de render. */
+
+/* ---------- globales (idénticas en las 3 vistas) ---------- */
+body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; }
+header { background: #1e293b; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+header h1 { font-size: 1.2rem; margin: 0; }
+header a { color: #94a3b8; text-decoration: none; font-size: .9rem; }
+.red { background: #ef4444; } .yellow { background: #f59e0b; } .green { background: #22c55e; }
+.dot { display: inline-block; border-radius: 50%; margin-right: .5rem; }
+
+/* ---------- view-index (dashboard) ---------- */
+.view-index body { }
+.view-index main { padding: 2rem; max-width: 1100px; margin: 0 auto; }
+.view-index table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 10px; overflow: hidden; }
+.view-index th, .view-index td { padding: .8rem 1rem; text-align: left; border-bottom: 1px solid #334155; }
+.view-index th { background: #0f172a; font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #94a3b8; }
+.view-index tr:hover td { background: #24344d; }
+.view-index .dot { width: 10px; height: 10px; }
+.view-index a.site { color: #38bdf8; text-decoration: none; }
+.view-index .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+.view-index .stat { background: #1e293b; border-radius: 10px; padding: 1rem 1.5rem; flex: 1; text-align: center; }
+.view-index .stat b { display: block; font-size: 1.8rem; }
+
+/* ---------- view-site (detalle) ---------- */
+.view-site main { padding: 2rem; max-width: 900px; margin: 0 auto; }
+.view-site .card { background: #1e293b; border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+.view-site .card h2 { font-size: 1rem; margin: 0 0 .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+.view-site .dot { width: 12px; height: 12px; vertical-align: middle; }
+.view-site table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.view-site th, .view-site td { padding: .5rem; text-align: left; border-bottom: 1px solid #334155; }
+.view-site a { color: #38bdf8; }
+
+/* ---------- view-login ---------- */
+.view-login body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.view-login .card { background: #1e293b; padding: 2.5rem; border-radius: 12px; width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+.view-login h1 { font-size: 1.3rem; margin: 0 0 1.5rem; text-align: center; }
+.view-login input { width: 100%; padding: .6rem; margin-bottom: .8rem; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; box-sizing: border-box; }
+.view-login button { width: 100%; padding: .6rem; border: 0; border-radius: 6px; background: #06b6d4; color: #fff; font-weight: 600; cursor: pointer; }
+.view-login .error { color: #f87171; font-size: .85rem; margin-bottom: .8rem; text-align: center; }

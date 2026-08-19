@@ -68,7 +68,6 @@ final class VersionTracker
      *  1. Header X-Powered-By "WordPress/X.Y.Z" (caso ideal, a menudo deshabilitado)
      *  2. <meta name="generator" content="WordPress X.Y.Z"> en el <head> del home
      *  3. Feed RSS /feed/ — tag <generator>https://wordpress.org/?v=X.Y.Z</generator>
-     *  4. Header Link rel="https://api.w.org/" (solo confirma WP, no da versión → null)
      *
      * Devuelve null si no se puede determinar (el sitio oculta la versión, práctica
      * común de hardening). En ese caso assess() no puede marcar core desactualizado.
@@ -164,12 +163,6 @@ final class VersionTracker
         }
 
         return self::FALLBACK_WP_VERSION;
-    }
-
-    private function basicAuth(Site $site): ?string
-    {
-        // Deprecated: usar Site::basicAuth() directamente.
-        return $site->basicAuth();
     }
 
     private function persist(Site $site, ?string $coreVersion, array $plugins, array $themes, string $severity): void

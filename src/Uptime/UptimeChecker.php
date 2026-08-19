@@ -20,7 +20,7 @@ final class UptimeResult
     public function __construct(
         public readonly int $status,      // 0 = connection error (HTTP 000)
         public readonly ?int $responseMs,
-        public readonly ?string $tlsState, // valid | expiring | expired | self-signed | null
+        public readonly ?string $tlsState, // valid | expiring | expired | null
     ) {
     }
 

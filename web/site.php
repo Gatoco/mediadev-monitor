@@ -38,22 +38,9 @@ $activity = $detail['last_activity'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($site['name']) ?> — Mediadev Monitor</title>
-    <style>
-        body { font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; }
-        header { background: #1e293b; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        header h1 { font-size: 1.2rem; margin: 0; }
-        header a { color: #94a3b8; text-decoration: none; font-size: .9rem; }
-        main { padding: 2rem; max-width: 900px; margin: 0 auto; }
-        .card { background: #1e293b; border-radius: 10px; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
-        .card h2 { font-size: 1rem; margin: 0 0 .8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
-        .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: .5rem; vertical-align: middle; }
-        .red { background: #ef4444; } .yellow { background: #f59e0b; } .green { background: #22c55e; }
-        table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-        th, td { padding: .5rem; text-align: left; border-bottom: 1px solid #334155; }
-        a { color: #38bdf8; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="view-site">
     <header>
         <h1><a href="index.php" style="text-decoration:none">🔭</a> <?= htmlspecialchars($site['name']) ?></h1>
         <a href="index.php">← Dashboard</a>
