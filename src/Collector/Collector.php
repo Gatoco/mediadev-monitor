@@ -43,7 +43,13 @@ final class CollectionReport
     public function hasCritical(): bool
     {
         foreach ($this->sites as $report) {
+            // DOWN siempre es crítico.
             if ($report->state === SiteState::DOWN) {
+                return true;
+            }
+            // RED-critical: un sitio cuyo core está desactualizado (severity red)
+            // es crítico (EV-03: down o outdated-RED → exit 1).
+            if (($report->metrics['versions']['severity'] ?? null) === 'red') {
                 return true;
             }
         }

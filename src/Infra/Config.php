@@ -26,14 +26,22 @@ final class Config
             ?: $this->root . '/data/mediadev.sqlite';
     }
 
-    /** @return array<int, array{url:string, name:string, type:string, wp_user:?string, token:?string}> */
+    /**
+     * @return array<int, array{url:string, name:string, type:string, wp_user:?string, token:?string}>
+     * @throws \RuntimeException si config/sites.php existe pero es inválido (EV-05 → exit 2)
+     */
     public function sites(): array
     {
         $file = $this->root . '/config/sites.php';
         if (!is_file($file)) {
             return [];
         }
-        return require $file;
+        try {
+            $sites = require $file;
+        } catch (\ParseError $e) {
+            throw new \RuntimeException("config/sites.php inválido: {$e->getMessage()}", 2);
+        }
+        return $sites;
     }
 
     /** @return array{username:string, password_hash:string} */
@@ -43,6 +51,11 @@ final class Config
         if (!is_file($file)) {
             return ['username' => '', 'password_hash' => ''];
         }
-        return require $file;
+        try {
+            $auth = require $file;
+        } catch (\ParseError $e) {
+            throw new \RuntimeException("config/auth.php inválido: {$e->getMessage()}", 2);
+        }
+        return $auth;
     }
 }

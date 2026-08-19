@@ -25,8 +25,14 @@ if (!in_array($mode, ['uptime', 'deep'], true)) {
 }
 
 $config = new Config();
-$collector = new Collector($config);
-$report = $collector->runAll($mode);
+
+try {
+    $collector = new Collector($config);
+    $report = $collector->runAll($mode);
+} catch (\RuntimeException $e) {
+    fwrite(STDERR, "ERROR de configuración: {$e->getMessage()}\n");
+    exit(2);
+}
 
 // Salida básica por ahora; Reporter completo en Phase 3
 foreach ($report->sites as $siteReport) {

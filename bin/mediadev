@@ -32,26 +32,37 @@ $config = new Config();
 switch ($command) {
     case 'check':
         $target = $args[1] ?? null;
-        $collector = new Collector($config);
 
-        if ($target === null || $target === 'all') {
-            $report = $collector->runAll('deep');
-        } else {
-            $registry = new SiteRegistry($config);
-            $site = $registry->findByUrl($target);
-            if ($site === null) {
-                fwrite(STDERR, "Sitio no encontrado: $target\n");
-                exit(2);
+        try {
+            $collector = new Collector($config);
+
+            if ($target === null || $target === 'all') {
+                $report = $collector->runAll('deep');
+            } else {
+                $registry = new SiteRegistry($config);
+                $site = $registry->findByUrl($target);
+                if ($site === null) {
+                    fwrite(STDERR, "Sitio no encontrado: $target\n");
+                    exit(2);
+                }
+                $siteReport = $collector->runOne($site);
+                $report = new CollectionReport([$siteReport]);
             }
-            $siteReport = $collector->runOne($site);
-            $report = new CollectionReport([$siteReport]);
+        } catch (\RuntimeException $e) {
+            fwrite(STDERR, "ERROR de configuración: {$e->getMessage()}\n");
+            exit(2);
         }
 
         echo (new Reporter())->render($report);
         exit($report->hasCritical() ? 1 : 0);
 
     case 'list':
-        $registry = new SiteRegistry($config);
+        try {
+            $registry = new SiteRegistry($config);
+        } catch (\RuntimeException $e) {
+            fwrite(STDERR, "ERROR de configuración: {$e->getMessage()}\n");
+            exit(2);
+        }
         $sites = $registry->all();
         foreach ($sites as $site) {
             printf("%-4d %-40s %-8s\n", $site->id, $site->url, $site->type);

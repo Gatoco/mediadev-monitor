@@ -21,6 +21,11 @@ final class VersionTracker
     private const FALLBACK_WP_VERSION = '6.6.2';
     private const CACHE_FILE = 'wp-latest-version.cache.json';
     private const CACHE_TTL = 86400; // 24h
+    // Ruta secundaria en la imagen (no sombreada por el volumen de datos).
+    // Permite inyectar la última versión estable durante el build E2E (OQ3)
+    // sin depender del volumen mediadev-data. La raíz del proyecto es /app
+    // dentro del contenedor monitor, y <repo-root> en local.
+    private string $imageCacheFile;
 
     private PDO $pdo;
 
@@ -30,6 +35,11 @@ final class VersionTracker
         private string $cacheDir,
     ) {
         $this->pdo = $sqlite->pdo();
+        // Cache embebido en la imagen en <root>/wp-latest-version.cache.json.
+        // La raíz del proyecto se deriva de la ubicación de esta clase
+        // (src/Version/VersionTracker.php → proyecto/): /app en el contenedor
+        // monitor, <repo-root> en local. Independiente del cwd.
+        $this->imageCacheFile = dirname(__DIR__, 2) . '/wp-latest-version.cache.json';
     }
 
     public function collect(Site $site): array
@@ -125,6 +135,15 @@ final class VersionTracker
 
         if (is_file($cacheFile)) {
             $cached = json_decode((string) file_get_contents($cacheFile), true);
+            if (is_array($cached) && isset($cached['version']) && $cached['fetched_at'] > time() - self::CACHE_TTL) {
+                return $cached['version'];
+            }
+        }
+
+        // OQ3: si el cache de datos no existe (o está vencido), probar el cache
+        // embebido en la imagen. Permite inyectar la versión estable en E2E.
+        if (is_file($this->imageCacheFile)) {
+            $cached = json_decode((string) file_get_contents($this->imageCacheFile), true);
             if (is_array($cached) && isset($cached['version']) && $cached['fetched_at'] > time() - self::CACHE_TTL) {
                 return $cached['version'];
             }

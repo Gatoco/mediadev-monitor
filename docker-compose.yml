@@ -1,3 +1,16 @@
+# Mediadev Monitor — compose (topología realistic-sites-e2e)
+#
+# `docker compose up`                      → solo monitor (producción del tío).
+# `docker compose --profile e2e up -d`     → monitor + 5 fixtures + mysql + 3 wp-cli (E2E).
+#
+# Perfil `e2e` aísla todos los servicios de prueba. Sin `--profile e2e`, compose
+# ignora los fixtures/mysql/wp-cli y `monitor` arranca standalone (backward
+# compatible con el despliegue de producción).
+#
+# Redes (D1): `net-sites` (5 fixtures + mysql + wp-cli) y `net-monitor`.
+# El monitor se adjunta a AMBAS: alcanza los fixtures por net-sites para sondear
+# y expone el dashboard 8080. Los fixtures SOLO están en net-sites.
+
 services:
   monitor:
     build: .
@@ -5,12 +18,251 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
+    networks:
+      - net-sites   # para sondear los fixtures (resuelve wp-full, wp-outdated, ...)
+      - net-monitor # para exponer el dashboard 8080
     volumes:
       - mediadev-data:/var/lib/mediadev/data
+      - ap-tokens:/ap-tokens:ro
       - ./config/sites.php:/app/config/sites.php:ro
       - ./config/auth.php:/app/config/auth.php:ro
     environment:
       - MEDIADEV_DB_PATH=/var/lib/mediadev/data/mediadev.sqlite
+    depends_on:
+      mysql:
+        condition: service_healthy
+        required: false
+
+  # --- E2E stack (solo con --profile e2e) ---
+
+  # MySQL compartido con 5 bases (D3); init script crea las 3 de WP.
+  mysql:
+    image: mysql:8.0
+    container_name: mediadev-mysql
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    # --skip-ssl: MySQL 8.0 habilita SSL por defecto; lo desactivamos para que
+    # wp-cli (cliente MariaDB) y los fixtures conecten sin certificados.
+    command: --skip-ssl
+    environment:
+      - MYSQL_DATABASE=wp_full
+      - MYSQL_USER=wp
+      - MYSQL_PASSWORD=wp
+      - MYSQL_ROOT_PASSWORD=rootpass
+    volumes:
+      - mediadev-wp-db:/var/lib/mysql
+      - ./docker/fixture-wp/mysql-init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # --- Fixtures WordPress (imagen reusable fixture-wp, FIXTURE_TYPE por env) ---
+
+  wp-full:
+    image: mediadev/fixture-wp
+    build: ./docker/fixture-wp
+    container_name: mediadev-wp-full
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    environment:
+      - FIXTURE_TYPE=full
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_full
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - wp-full-html:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/wp-json/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+
+  wp-outdated:
+    image: mediadev/fixture-wp
+    build: ./docker/fixture-wp
+    container_name: mediadev-wp-outdated
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    environment:
+      - FIXTURE_TYPE=outdated
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_outdated
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - wp-outdated-html:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/wp-json/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+
+  wp-hardened:
+    image: mediadev/fixture-wp
+    build: ./docker/fixture-wp
+    container_name: mediadev-wp-hardened
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    environment:
+      - FIXTURE_TYPE=hardened
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_hardened
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - wp-hardened-html:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/wp-json/"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+
+  # --- Fixture no-WP (nginx estático) ---
+
+  non-wp:
+    build: ./docker/non-wp
+    container_name: mediadev-non-wp
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # --- Fixture caído (sin listener) ---
+
+  down:
+    image: mediadev/down
+    build: ./docker/down
+    container_name: mediadev-down
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-sites
+    # Sin healthcheck: el contenedor permanece "running" pero no escucha nada.
+
+  # --- wp-cli oneshots (crean usuario monitor + AP en cada fixture WP) ---
+  # Escriben el token en /ap-tokens/<FIXTURE_NAME>.token (volumen compartido D6).
+
+  # Inicializa el volumen /ap-tokens con permisos de www-data para que los
+  # oneshots wp-cli (corren como www-data) puedan escribir los tokens.
+  ap-tokens-init:
+    image: alpine:3.19
+    container_name: mediadev-ap-tokens-init
+    profiles: [e2e]
+    networks:
+      - net-sites
+    volumes:
+      - ap-tokens:/ap-tokens
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /ap-tokens && chown -R 82:82 /ap-tokens && echo ap-tokens-init-ok"]
+
+  wp-cli-full:
+    image: wordpress:cli
+    container_name: mediadev-wp-cli-full
+    profiles: [e2e]
+    networks:
+      - net-sites
+    environment:
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_full
+      - FIXTURE_NAME=wp-full
+      - WP_URL=http://wp-full
+    depends_on:
+      ap-tokens-init:
+        condition: service_completed_successfully
+      wp-full:
+        condition: service_healthy
+    volumes:
+      - wp-full-html:/var/www/html
+      - ap-tokens:/ap-tokens
+      - ./bin/wp-bootstrap.sh:/wp-bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/wp-bootstrap.sh"]
+
+  wp-cli-outdated:
+    image: wordpress:cli
+    container_name: mediadev-wp-cli-outdated
+    profiles: [e2e]
+    networks:
+      - net-sites
+    environment:
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_outdated
+      - FIXTURE_NAME=wp-outdated
+      - WP_URL=http://wp-outdated
+    depends_on:
+      ap-tokens-init:
+        condition: service_completed_successfully
+      wp-outdated:
+        condition: service_healthy
+    volumes:
+      - wp-outdated-html:/var/www/html
+      - ap-tokens:/ap-tokens
+      - ./bin/wp-bootstrap.sh:/wp-bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/wp-bootstrap.sh"]
+
+  wp-cli-hardened:
+    image: wordpress:cli
+    container_name: mediadev-wp-cli-hardened
+    profiles: [e2e]
+    networks:
+      - net-sites
+    environment:
+      - WORDPRESS_DB_HOST=mysql
+      - WORDPRESS_DB_USER=wp
+      - WORDPRESS_DB_PASSWORD=wp
+      - WORDPRESS_DB_NAME=wp_hardened
+      - FIXTURE_NAME=wp-hardened
+      - WP_URL=http://wp-hardened
+    depends_on:
+      ap-tokens-init:
+        condition: service_completed_successfully
+      wp-hardened:
+        condition: service_healthy
+    volumes:
+      - wp-hardened-html:/var/www/html
+      - ap-tokens:/ap-tokens
+      - ./bin/wp-bootstrap.sh:/wp-bootstrap.sh:ro
+    entrypoint: ["/bin/sh", "/wp-bootstrap.sh"]
+
+networks:
+  net-sites:
+  net-monitor:
 
 volumes:
   mediadev-data:
+  mediadev-wp-db:
+  wp-full-html:
+  wp-outdated-html:
+  wp-hardened-html:
+  ap-tokens:
