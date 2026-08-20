@@ -11,3 +11,6 @@ vendor/
 # Sistema
 .DS_Store
 *.log
+
+# Engram local config
+.engram/
