@@ -12,6 +12,9 @@ class SiteHealthSnapshot extends Model
 
     protected $table = 'site_health_snapshots';
 
+    // The monitor schema uses a `ts` column instead of Eloquent timestamps.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];

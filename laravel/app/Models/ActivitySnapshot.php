@@ -12,6 +12,9 @@ class ActivitySnapshot extends Model
 
     protected $table = 'activity_snapshots';
 
+    // The monitor schema uses a `ts` column instead of Eloquent timestamps.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];

@@ -12,6 +12,9 @@ class UptimeCheck extends Model
 
     protected $table = 'uptime_checks';
 
+    // The monitor schema uses a `ts` column instead of Eloquent timestamps.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];
