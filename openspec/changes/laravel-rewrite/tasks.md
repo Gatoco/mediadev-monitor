@@ -56,16 +56,16 @@ Chain strategy: stacked-to-main
 - [x] 4.3 RED test: artisan command exits 2 on missing config (AC-06)
 - [x] 4.4 RED test: scheduler triggers uptime at 5-min boundary (LA-06)
 - [x] 4.5 RED test: scheduler triggers deep at 6-hour boundary (LA-06)
-- [ ] 4.6 RED test: `e2e-assert.sh` invokes artisan, not `bin/*` (AC-10, EV-A1)
-- [ ] 4.7 Run domain unit tests with mocked repositories
-- [ ] 4.8 Run Eloquent adapter integration tests against SQLite
-- [ ] 4.9 Run artisan command exit-code tests
-- [ ] 4.10 Re-target `bin/e2e-assert.sh` to artisan commands (EV-A1)
+- [x] 4.6 RED test: `e2e-assert.sh` invokes artisan, not `bin/*` (AC-10, EV-A1)
+- [x] 4.7 Run domain unit tests with mocked repositories
+- [x] 4.8 Run Eloquent adapter integration tests against SQLite
+- [x] 4.9 Run artisan command exit-code tests
+- [x] 4.10 Re-target `bin/e2e-assert.sh` to artisan commands (EV-A1)
 
 ## Phase 5: Cleanup / Rollout
 
-- [ ] 5.1 Delete `bin/collector.php` and `bin/mediadev` (AC-10)
-- [ ] 5.2 Delete `web/*.php`, `src/Dashboard/`, `src/Cli/`, `src/Auth/`, `src/Infra/` (FD-06, FD-07)
-- [ ] 5.3 Update `Dockerfile` to build Laravel in `/app/laravel` (LA-08)
-- [ ] 5.4 Update `docker-compose.yml` to mount `laravel/` as `/app/laravel`
-- [ ] 5.5 Update `crontab` to single line `* * * * * cd /app/laravel && php artisan schedule:run`
+- [x] 5.1 Delete `bin/collector.php` and `bin/mediadev` (AC-10)
+- [x] 5.2 Delete `web/*.php`, `src/Dashboard/`, `src/Cli/`, `src/Auth/`, `src/Infra/` (FD-06, FD-07)
+- [x] 5.3 Update `Dockerfile` to build Laravel in `/app/laravel` (LA-08)
+- [x] 5.4 Update `docker-compose.yml` to mount `laravel/` as `/app/laravel`
+- [x] 5.5 Update `crontab` to single line `* * * * * cd /app/laravel && php artisan schedule:run`
