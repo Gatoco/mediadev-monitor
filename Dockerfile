@@ -33,9 +33,11 @@ COPY docker/fixture-wp/wp-latest-version.cache.json /app/laravel/wp-latest-versi
 # .env mínimo para el build (key:generate + cache de config)
 COPY laravel/.env.example /app/laravel/.env
 
-# Instalar dependencias y generar APP_KEY
+# Instalar dependencias, generar APP_KEY y publicar assets de Filament
+# (sin filament:assets el panel sirve CSS/JS 404 → login no funciona).
 RUN composer install --no-dev --no-interaction --optimize-autoloader \
-    && php artisan key:generate
+    && php artisan key:generate \
+    && php artisan filament:assets
 
 # Scheduler: una sola línea en /etc/cron.d → schedule:run (uptime 5min, deep 6h)
 COPY crontab /etc/cron.d/mediadev

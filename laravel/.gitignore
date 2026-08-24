@@ -18,6 +18,10 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+# Filament assets publicados (se regeneran con php artisan filament:assets)
+/public/css
+/public/js
+/public/fonts
 /storage/*.key
 /storage/pail
 /vendor
