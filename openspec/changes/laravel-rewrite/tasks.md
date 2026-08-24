@@ -42,20 +42,20 @@ Chain strategy: stacked-to-main
 
 ## Phase 3: Integration / Wiring
 
-- [ ] 3.1 Create `app/Console/Commands/CollectorUptimeCommand.php` exiting 0/1/2 with `name  state` output (AC-01, AC-04..AC-07)
-- [ ] 3.2 Create `app/Console/Commands/CollectorDeepCommand.php` exiting 0/1/2 with `name  state` output (AC-02, AC-04..AC-07)
-- [ ] 3.3 Create `app/Console/Commands/CheckAllCommand.php` exiting 0/1/2 with grep-compatible output (AC-03..AC-09)
-- [ ] 3.4 Wire scheduler in `routes/console.php`: uptime every 5min, deep every 6h (LA-06, LA-07)
+- [x] 3.1 Create `app/Console/Commands/CollectorUptimeCommand.php` exiting 0/1/2 with `name  state` output (AC-01, AC-04..AC-07)
+- [x] 3.2 Create `app/Console/Commands/CollectorDeepCommand.php` exiting 0/1/2 with `name  state` output (AC-02, AC-04..AC-07)
+- [x] 3.3 Create `app/Console/Commands/CheckAllCommand.php` exiting 0/1/2 with grep-compatible output (AC-03..AC-09)
+- [x] 3.4 Wire scheduler in `routes/console.php`: uptime every 5min, deep every 6h (LA-06, LA-07)
 - [ ] 3.5 Create `app/Filament/Resources/SiteResource.php` with List/View/Edit, no Create (FD-01, FD-02, FD-08)
 - [ ] 3.6 Create `app/Filament/Widgets/*Widget.php` with eager-loaded queries (FD-04, FD-05)
 
 ## Phase 4: Testing / RED Tests
 
-- [ ] 4.1 RED test: `CollectionReport::hasCritical()` returns true for DOWN state (AC-05, AC-09)
-- [ ] 4.2 RED test: `hasCritical()` returns true for `versions.severity === 'red'` (AC-05, AC-09)
-- [ ] 4.3 RED test: artisan command exits 2 on missing config (AC-06)
-- [ ] 4.4 RED test: scheduler triggers uptime at 5-min boundary (LA-06)
-- [ ] 4.5 RED test: scheduler triggers deep at 6-hour boundary (LA-06)
+- [x] 4.1 RED test: `CollectionReport::hasCritical()` returns true for DOWN state (AC-05, AC-09)
+- [x] 4.2 RED test: `hasCritical()` returns true for `versions.severity === 'red'` (AC-05, AC-09)
+- [x] 4.3 RED test: artisan command exits 2 on missing config (AC-06)
+- [x] 4.4 RED test: scheduler triggers uptime at 5-min boundary (LA-06)
+- [x] 4.5 RED test: scheduler triggers deep at 6-hour boundary (LA-06)
 - [ ] 4.6 RED test: `e2e-assert.sh` invokes artisan, not `bin/*` (AC-10, EV-A1)
 - [ ] 4.7 Run domain unit tests with mocked repositories
 - [ ] 4.8 Run Eloquent adapter integration tests against SQLite

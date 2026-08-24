@@ -1,80 +1,71 @@
-# SDD Apply Progress — PR 1 (laravel-rewrite)
+# SDD Apply Progress — PR 2 (laravel-rewrite: artisan commands + scheduler)
 
 ## Summary
-Implemented PR 1 (Phase 1 + Phase 2) of the `laravel-rewrite` change.
+Implemented PR 2 (Phase 3.1-3.4 + RED tests 4.1-4.5) of the `laravel-rewrite` change: the artisan command surface replacing `bin/collector.php` and `bin/mediadev`, the legacy config bridge, the scheduler wiring, and the exit-code/scheduler test suite. Builds on PR 1 (already committed on `feat/laravel-rewrite`).
 
 ## Completed Tasks
-- [x] 1.1 Scaffold Laravel 12 in `laravel/` with PHP 8.3 (LA-01)
-- [x] 1.2 Copy `.env.example` → `.env`, set `DB_CONNECTION=sqlite` pointing to existing file (LA-02, LA-03)
-- [x] 1.3 Add `filament/filament` and required deps to `composer.json`
-- [x] 2.1 Port 6 domain classes + `Collector`, `SiteRegistry`, `RestClient` verbatim to `domain/` (EP-08)
-- [x] 2.2 Create repository interfaces in `domain/Port/` (EP-06)
-- [x] 2.3 Create Eloquent migration replicating 5-table SQLite schema (EP-01, EP-02, EP-03, EP-04)
-- [x] 2.4 Create `SiteState` enum and Eloquent models with casts (EP-05)
-- [x] 2.5 Create Eloquent adapter classes in `app/Repositories/` (EP-07)
-- [x] 2.6 Bind interfaces to adapters in `app/Providers/AppServiceProvider.php`
+- [x] 1.1-1.3, 2.1-2.6 — PR 1 (previous batch; see earlier progress)
+- [x] 3.1 `collector:uptime` — exit 0/1/2, `name  state` output (AC-01, AC-04..AC-07)
+- [x] 3.2 `collector:deep` — exit 0/1/2, `name  state` output (AC-02, AC-04..AC-07)
+- [x] 3.3 `monitor:check {target} [--list]` — exit 0/1/2, Reporter table output (AC-03..AC-09)
+- [x] 3.4 Scheduler in `routes/console.php` — uptime `*/5 * * * *`, deep `0 */6 * * *` (LA-06, LA-07)
+- [x] 4.1 RED test: `hasCritical()` → DOWN (existing CollectionReportTest covers; re-verified)
+- [x] 4.2 RED test: `hasCritical()` → severity red (existing CollectionReportTest covers; re-verified)
+- [x] 4.3 RED test: artisan exits 2 on config error (`monitor:check` unknown target; missing config path returns empty sites — see note)
+- [x] 4.4 RED test: scheduler registers uptime at 5-min boundary
+- [x] 4.5 RED test: scheduler registers deep at 6-hour boundary
 
 ## Work Unit Evidence
 
 | Evidence | Value |
 |----------|-------|
-| Focused test command | `docker run --rm -v "$PWD:/app" -w /app php:8.3-cli php vendor/phpunit/phpunit/phpunit tests/Unit --testdox` |
-| Test result | OK (13 tests, 28 assertions) — CollectionReport, SiteState, Degradation |
-| Runtime harness | `docker run --rm -v "$PWD:/app" -v "$PWD/../data:/data" -w /app php:8.3-cli php artisan migrate --force` |
-| Runtime result | All 5 monitor tables created in `data/mediadev.sqlite`; schema verified with `PRAGMA table_info` |
-| Rollback boundary | Remove `laravel/` directory entirely; vanilla `src/`, `bin/`, `web/` untouched. No data migration needed. |
+| Focused test command | `docker run --rm -v "$PWD/laravel:/app" -w /app php:8.3-cli php vendor/phpunit/phpunit/phpunit tests/Feature --testdox` |
+| Test result | OK (11 tests, 13 assertions) — exit codes + scheduler cadence |
+| Full suite | OK (24 tests, 41 assertions) — Unit + Feature |
+| Runtime harness | `docker run --rm -v "$PWD/laravel:/app" -v "$PWD/data:/data" -w /app -e DB_DATABASE=../data/mediadev.sqlite php:8.3-cli php artisan collector:uptime` |
+| Runtime result | Exit 0 against the real `data/mediadev.sqlite` (0 sites, empty config) |
+| Rollback boundary | `laravel/app/Console/`, `laravel/app/Support/`, `laravel/config/mediadev.php`, `laravel/routes/console.php`, `laravel/tests/Feature/CommandExitCodeTest.php`, `SchedulerTest.php`, plus `$timestamps=false` on 4 snapshot models — vanilla `bin/*` untouched |
 
 ## Key Decisions
-- Composer platform pinned to `"php": "8.3"` because `laravel/framework ^13.17` defaults to PHP 8.4+.
-- Composer updates require `--ignore-platform-req=ext-intl` since `php:8.3-cli` Docker image lacks the intl extension (Filament v4 needs it).
-- `DB_DATABASE` in `.env` set to `../data/mediadev.sqlite` (relative to `laravel/` directory).
-- `SiteStateCast` created because Laravel's native enum cast returns `null` for unknown values; the cast maps them to `SiteState::UNKNOWN`.
-- Eloquent `Model::find()` conflict with `SiteRepository::find()` resolved by delegating through `static::query()->find($id)`.
+- `bin/collector.php` and `bin/mediadev` are NOT deleted in this PR — cutover happens in PR 4 alongside the E2E re-target. Keeps the branch bisectable.
+- `config/mediadev.php` bridge keeps `config/sites.php` + `config/auth.php` as the source of truth (legacy seed workflow untouched); `cache_dir` → `storage/app/mediadev` replaces the vanilla `data/mediadev.sqlite.cache` convention.
+- `SiteConfig` (app/Support) parses legacy files with the same `ParseError → RuntimeException(2)` contract as the vanilla `Config::sites()`.
+- `Reporter` ported verbatim to `app/Console/Output/Reporter` (only namespace change).
+- `Collector` bound as a singleton in `AppServiceProvider`, which also calls `syncFromConfig(SiteConfig::sites())` — same sync-per-boot semantics as the vanilla constructor.
+- `Site::current_state` cast: `SiteStateCast` maps unknown strings to `SiteState::UNKNOWN` (PR 1) — preserved.
+- Eloquent `Site` model has `$timestamps = true` (table has the columns); the 4 snapshot models set `$timestamps = false` (legacy tables lack the columns — see Issues).
 
 ## Deviations from Design
-- None. Implementation matches design decisions (standalone `domain/` lib, repository port pattern, schema parity).
+- `monitor:check` gains a `--list` flag (mirrors `bin/mediadev list`), which the design table didn't list; AC-03 only required `check all`. Minor scope addition for CLI parity.
+- Command classes register via auto-discovery in `app/Console/Commands/` (Laravel 12 default), no manual registration needed — matches design's file list.
+- Cache dir: design.md's `data flow` says `VersionTracker` reads `<root>/wp-latest-version.cache.json`; the port keeps that path resolution (`dirname(__DIR__, 2)`), but the runtime cache (24h TTL) now goes to `storage/app/mediadev` — avoids writing into `data/` (vanilla convention was `data/mediadev.sqlite.cache`). The injected build-time cache still resolves via `dirname()`.
 
 ## Issues Found
-- `php:8.3-cli` lacks `ext-intl` → documented workaround with `--ignore-platform-req=ext-intl`.
-- SQLite file must exist before `php artisan migrate` runs when `DB_DATABASE` is a relative path.
+- **Eloquent timestamp bug (PR 1 latent):** snapshot tables replicate the legacy schema WITHOUT `created_at`/`updated_at`, but the 4 snapshot models default to `$timestamps = true` → `insert` fails with "table uptime_checks has no column named updated_at". Fixed by `public $timestamps = false` on `UptimeCheck`, `VersionSnapshot`, `SiteHealthSnapshot`, `ActivitySnapshot`. This was the reason `collector:uptime` exited 2 during integration testing. Root cause: schema parity (EP-02) vs. Eloquent defaults mismatch — the migration is correct; the models were wrong.
+- `DB_DATABASE=:memory:` in phpunit.xml requires `RefreshDatabase` on Feature tests that touch the DB (already the pattern).
+- `php:8.3-cli` lacks `ext-intl` → composer operations need `--ignore-platform-req=ext-intl` (known from PR 1).
 
-## Remaining Tasks (Phase 3-5)
-- 3.1-3.4: Artisan commands + scheduler wiring (PR 2)
-- 3.5-3.6: Filament dashboard + widgets (PR 3)
-- 4.1-4.10: RED tests + adapter integration tests + E2E re-target (PR 4)
-- 5.1-5.5: Cleanup / rollout
+## Remaining Tasks (PR 3 + PR 4)
+- 3.5 SiteResource + 3.6 Widgets (Filament, PR 3)
+- 4.6-4.9 RED/integration tests for e2e-assert re-target (PR 4)
+- 4.10 Re-target `bin/e2e-assert.sh` to artisan (PR 4)
+- 5.1-5.5 Dockerfile/compose/crontab cleanup + deletion of vanilla `bin/*`, `web/*`, `src/*` (PR 4)
 
 ## Files Changed
 | File | Action | Description |
 |------|--------|-------------|
-| `laravel/composer.json` | Modified | Added filament/filament ^4.0, `"Domain\\": "domain/"` autoload, `"platform": {"php": "8.3"}` |
-| `laravel/.env` | Modified | SQLite config pointing to `../data/mediadev.sqlite` |
-| `laravel/phpunit.xml` | Modified | Added `domain/` to source include; :memory: DB for tests |
-| `laravel/domain/Infra/RestClient.php` | Created | Verbatim port from `src/Infra/RestClient.php` |
-| `laravel/domain/SiteRegistry/SiteState.php` | Created | 5-state enum (wp-full, wp-degraded, non-wp, down, unknown) |
-| `laravel/domain/SiteRegistry/Site.php` | Created | Verbatim port |
-| `laravel/domain/SiteRegistry/SiteRegistry.php` | Created | Ported; Sqlite/PDO replaced by SiteRepository port |
-| `laravel/domain/Port/*Repository.php` | Created | 5 repository interfaces (Site, UptimeCheck, VersionSnapshot, SiteHealthSnapshot, ActivitySnapshot) |
-| `laravel/domain/Degradation/Degradation.php` | Created | Verbatim port |
-| `laravel/domain/Uptime/UptimeChecker.php` | Created | Ported; Sqlite replaced by UptimeCheckRepository port |
-| `laravel/domain/Version/VersionTracker.php` | Created | Ported; Sqlite replaced by VersionSnapshotRepository port |
-| `laravel/domain/SiteHealth/SiteHealthCollector.php` | Created | Ported; Sqlite replaced by SiteHealthSnapshotRepository port |
-| `laravel/domain/Activity/ActivityCollector.php` | Created | Ported; Sqlite replaced by ActivitySnapshotRepository port |
-| `laravel/domain/Collector/Collector.php` | Created | Ported; deps replaced by repository ports |
-| `laravel/domain/Collector/SiteReport.php` | Created | Verbatim port |
-| `laravel/domain/Collector/CollectionReport.php` | Created | Verbatim port |
-| `laravel/app/Casts/SiteStateCast.php` | Created | Eloquent cast mapping string → SiteState enum |
-| `laravel/app/Models/Site.php` | Created | Eloquent model with SiteStateCast; repository interface methods via query() |
-| `laravel/app/Models/UptimeCheck.php` | Created | Eloquent model |
-| `laravel/app/Models/VersionSnapshot.php` | Created | Eloquent model |
-| `laravel/app/Models/SiteHealthSnapshot.php` | Created | Eloquent model |
-| `laravel/app/Models/ActivitySnapshot.php` | Created | Eloquent model |
-| `laravel/app/Repositories/Eloquent*Repository.php` | Created | 5 adapters mapping Eloquent ↔ port interfaces |
-| `laravel/app/Providers/AppServiceProvider.php` | Modified | Singleton bindings for all 5 repository interfaces |
-| `laravel/database/migrations/2025_01_15_000000_create_monitor_tables.php` | Created | 5-table migration replicating SQLite schema |
-| `laravel/tests/Unit/CollectionReportTest.php` | Created | Unit tests for hasCritical() |
-| `laravel/tests/Unit/SiteStateTest.php` | Created | Unit tests for enum + Site::basicAuth() |
-| `laravel/tests/Unit/DegradationTest.php` | Created | Unit tests with mocked SiteRepository |
+| `laravel/config/mediadev.php` | Created | Bridge config: legacy sites/auth file paths + cache_dir |
+| `laravel/app/Support/SiteConfig.php` | Created | Parses legacy config/sites.php + auth.php with exit-2 parity |
+| `laravel/app/Console/Output/Reporter.php` | Created | Ported vanilla Reporter (table + ANSI) |
+| `laravel/app/Console/Commands/CollectorUptimeCommand.php` | Created | `collector:uptime` — name/state output, exit 0/1/2 |
+| `laravel/app/Console/Commands/CollectorDeepCommand.php` | Created | `collector:deep` — name/state output, exit 0/1/2 |
+| `laravel/app/Console/Commands/MonitorCheckCommand.php` | Created | `monitor:check {all\|--list}` — Reporter output, exit 0/1/2 |
+| `laravel/app/Providers/AppServiceProvider.php` | Modified | Binds SiteRegistry + Collector singletons; syncFromConfig at boot |
+| `laravel/routes/console.php` | Modified | Scheduler: uptime every 5min, deep every 6h |
+| `laravel/tests/Feature/CommandExitCodeTest.php` | Created | 8 exit-code integration tests |
+| `laravel/tests/Feature/SchedulerTest.php` | Created | 2 cadence tests |
+| `laravel/app/Models/{UptimeCheck,VersionSnapshot,SiteHealthSnapshot,ActivitySnapshot}.php` | Modified | `$timestamps = false` (legacy schema parity) |
+| `openspec/changes/laravel-rewrite/tasks.md` | Modified | Marked 3.1-3.4, 4.1-4.5 complete |
 
 ## Status
-6/6 tasks complete for PR 1. Ready for next batch (PR 2: Artisan commands + scheduler wiring).
+11/19 tasks complete (PR 1: 6, PR 2: 9). Ready for next batch: PR 3 (Filament) then PR 4 (E2E + cleanup).
