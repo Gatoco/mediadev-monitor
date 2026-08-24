@@ -2,6 +2,5 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// La home del scaffold (welcome) se eliminó: el panel Filament es la UI.
+Route::redirect('/', '/admin');

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,11 +10,12 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     public function canAccessPanel(Panel $panel): bool
     {
+        // ponytail: single-admin monitor, no roles. Add role checks if the
+        // panel ever gets multi-user.
         return true;
     }
 
