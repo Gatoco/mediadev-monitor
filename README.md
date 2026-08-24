@@ -150,6 +150,8 @@ docker compose --profile e2e up -d
 bin/e2e-assert.sh
 ```
 
+Validado de punta a punta: **12/12 checks PASS** (clasificación por fixture, 3-strike down, Q3 tokenless-first, idempotencia, exit codes) + scheduler cron real corriendo `collector:uptime`/`collector:deep` contra el volumen de datos.
+
 ## Roadmap
 
 - [x] Análisis de cliente (28 sitios de MediaDev verificados)
