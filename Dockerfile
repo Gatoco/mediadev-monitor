@@ -3,15 +3,18 @@
 FROM php:8.3-cli
 
 # Extensiones necesarias: pdo_sqlite para Eloquent, intl para Filament v4
-# (paginación usa Number::format — sin intl el panel lanza excepción).
+# (paginación usa Number::format — sin intl el panel lanza excepción) y zip
+# para openspout (dependencia de Filament export/import — composer install
+# falla sin ext-zip).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cron \
         curl \
         unzip \
         libicu-dev \
+        libzip-dev \
         libsqlite3-dev \
         pkg-config \
-    && docker-php-ext-install intl pdo pdo_sqlite \
+    && docker-php-ext-install intl pdo pdo_sqlite zip \
     && rm -rf /var/lib/apt/lists/*
 
 # Composer
@@ -39,6 +42,10 @@ COPY crontab /etc/cron.d/mediadev
 RUN chmod 0644 /etc/cron.d/mediadev \
     && crontab /etc/cron.d/mediadev
 
+# Entrypoint: migraciones idempotentes sobre la DB del volumen + cron + panel.
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 # Panel Filament
 EXPOSE 8080
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

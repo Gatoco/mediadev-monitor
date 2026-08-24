@@ -1,4 +1,5 @@
 # Mediadev Monitor — cron
 # Una sola entrada: Laravel Scheduler decide la cadencia
 # (uptime cada 5 min, deep cada 6h — routes/console.php).
-* * * * * cd /app/laravel && php artisan schedule:run >> /var/log/mediadev-scheduler.log 2>&1
+# Nota: cron usa PATH mínimo (/usr/bin:/bin) — ruta absoluta a php.
+* * * * * cd /app/laravel && /usr/local/bin/php artisan schedule:run >> /var/log/mediadev-scheduler.log 2>&1

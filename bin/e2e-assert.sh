@@ -105,6 +105,22 @@ wait_healthy() {
     return 1
 }
 
+# Espera a que el monitor haya terminado las migraciones del entrypoint
+# (el puerto 8080 responde solo después de migrate --force).
+wait_monitor_ready() {
+    log "Esperando a que el monitor esté listo (migraciones)..."
+    local deadline=$(( $(date +%s) + 90 ))
+    while [ "$(date +%s)" -lt "$deadline" ]; do
+        if $DC exec -T monitor sh -c "curl -s -o /dev/null http://localhost:8080/admin/login" 2>/dev/null; then
+            ok "monitor listo (migraciones aplicadas)"
+            return 0
+        fi
+        sleep 3
+    done
+    warn "monitor no respondió en 90s — continuando igual (puede fallar artisan)"
+    return 0
+}
+
 # ---------------------------------------------------------------- 2. bootstrap
 bootstrap_aps() {
     log "Bootstrap de Application Passwords (wp-cli oneshots)..."
@@ -128,6 +144,13 @@ seed_sites() {
     if [ -z "$token_full" ] || [ -z "$token_outdated" ] || [ -z "$token_hardened" ]; then
         fail "faltan tokens de AP (ap-tokens vol?)"
         return 1
+    fi
+
+    # Guarda: si compose creó config/sites.php como DIRECTORIO (bind mount sin
+    # archivo previo), el heredoc fallaría. Reemplazar el directorio vacío.
+    if [ -d config/sites.php ]; then
+        warn "config/sites.php es un directorio (bind mount) — reemplazando"
+        rm -rf config/sites.php
     fi
 
     cat > config/sites.php <<PHP
@@ -308,6 +331,9 @@ main() {
         if [ "$rc" -eq 2 ]; then die "fixtures no listos (RED-A)"; fi
         die "fixtures nunca quedaron healthy"
     }
+
+    # 1b. Monitor con migraciones aplicadas (entrypoint)
+    wait_monitor_ready
 
     # 2. Bootstrap APs
     bootstrap_aps
