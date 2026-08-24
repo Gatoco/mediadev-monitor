@@ -24,10 +24,11 @@ services:
     volumes:
       - mediadev-data:/var/lib/mediadev/data
       - ap-tokens:/ap-tokens:ro
-      - ./config/sites.php:/app/config/sites.php:ro
-      - ./config/auth.php:/app/config/auth.php:ro
+      - ./config/sites.php:/app/laravel/config/sites.php:ro
+      - ./config/auth.php:/app/laravel/config/auth.php:ro
     environment:
-      - MEDIADEV_DB_PATH=/var/lib/mediadev/data/mediadev.sqlite
+      # DB compartida con el volumen; el .env de Laravel apunta aquí.
+      - DB_DATABASE=/var/lib/mediadev/data/mediadev.sqlite
     depends_on:
       mysql:
         condition: service_healthy

@@ -1,49 +1,44 @@
-# Mediadev Monitor — Dockerfile
+# Mediadev Monitor — Dockerfile (Laravel 12 + Filament v4)
 
 FROM php:8.3-cli
 
-# Extensiones necesarias
-# libsqlite3-dev + pkg-config son necesarios para compilar pdo_sqlite en php:8.3-cli.
+# Extensiones necesarias: pdo_sqlite para Eloquent, intl para Filament v4
+# (paginación usa Number::format — sin intl el panel lanza excepción).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cron \
         curl \
         unzip \
+        libicu-dev \
         libsqlite3-dev \
         pkg-config \
-    && docker-php-ext-install pdo pdo_sqlite \
+    && docker-php-ext-install intl pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app
+WORKDIR /app/laravel
 
 # Código
-COPY composer.json ./
-COPY src/ src/
-COPY bin/ bin/
-COPY config/sites.example.php config/sites.example.php
-COPY config/auth.example.php config/auth.example.php
-COPY web/ web/
+COPY laravel/ .
 
 # OQ3: inyectar el cache de última versión estable de WP para que
 # VersionTracker::latestStableWp() devuelva 7.0.4 (en lugar del fallback 6.6.2).
-# El volumen mediadev-data cubre /var/lib/mediadev/data, así que colocamos el
-# cache en /app (no sombreado) y VersionTracker lo consulta como segunda opción.
-COPY docker/fixture-wp/wp-latest-version.cache.json /app/wp-latest-version.cache.json
+# El port resuelve la ruta relativa a domain/Version/ → /app/laravel.
+COPY docker/fixture-wp/wp-latest-version.cache.json /app/laravel/wp-latest-version.cache.json
 
-# Instalar dependencias (vendor/autoload.php)
-RUN composer install --no-dev --no-interaction --optimize-autoloader
+# .env mínimo para el build (key:generate + cache de config)
+COPY laravel/.env.example /app/laravel/.env
 
-# Datos (volume)
-RUN mkdir -p /var/lib/mediadev/data
-ENV MEDIADEV_DB_PATH=/var/lib/mediadev/data/mediadev.sqlite
+# Instalar dependencias y generar APP_KEY
+RUN composer install --no-dev --no-interaction --optimize-autoloader \
+    && php artisan key:generate
 
-# Cron: uptime cada 5 min, deep cada 6h
+# Scheduler: una sola línea en /etc/cron.d → schedule:run (uptime 5min, deep 6h)
 COPY crontab /etc/cron.d/mediadev
 RUN chmod 0644 /etc/cron.d/mediadev \
     && crontab /etc/cron.d/mediadev
 
-# Dashboard
+# Panel Filament
 EXPOSE 8080
-CMD ["php", "-S", "0.0.0.0:8080", "-t", "/app/web"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]

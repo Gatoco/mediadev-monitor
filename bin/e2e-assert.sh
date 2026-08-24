@@ -9,7 +9,7 @@
 #   1. Esperar healthchecks (o fallar rápido si WAIT_FOR_HEALTH=0)
 #   2. Bootstrap APs (wp-cli oneshots → tokens en /ap-tokens)
 #   3. Sembrar config/sites.php desde /ap-tokens/*.token
-#   4. Correr bin/collector.php deep + bin/mediadev check all (dentro del contenedor)
+#   4. Correr php artisan collector:deep + monitor:check all (dentro del contenedor)
 #   5. Verificar 3-strike down (collector.php uptime)
 #   6. Grep fila por fixture vs estado esperado; resumen PASS/FAIL
 #
@@ -154,14 +154,14 @@ read_token() {
 
 # ---------------------------------------------------------------- 4. run collectors (deep)
 run_deep() {
-    log "Corriendo bin/collector.php deep dentro del monitor..."
+    log "Corriendo php artisan collector:deep dentro del monitor..."
     # Los exit codes 0/1/2 son parte de la semántica (EV-02..EV-04). Capturamos
     # el código real sin abortar por set -e.
     set +e
-    $DC exec -T monitor php /app/bin/collector.php deep > /tmp/e2e-deep.out 2>&1
+    $DC exec -T monitor sh -c "cd /app/laravel && php artisan collector:deep" > /tmp/e2e-deep.out 2>&1
     DEEP_EXIT=$?
-    log "Corriendo bin/mediadev check all dentro del monitor..."
-    $DC exec -T monitor php /app/bin/mediadev check all > /tmp/e2e-check.out 2>&1
+    log "Corriendo php artisan monitor:check all dentro del monitor..."
+    $DC exec -T monitor sh -c "cd /app/laravel && php artisan monitor:check all" > /tmp/e2e-check.out 2>&1
     CHECK_EXIT=$?
     set -e
 }
@@ -181,11 +181,11 @@ assert_exit_codes() {
 
 # ---------------------------------------------------------------- 5. 3-strike down (EV-06/EV-07)
 three_strike_down() {
-    log "Verificando 3-strike down (collector.php uptime)..."
+    log "Verificando 3-strike down (collector:uptime)..."
     local prev=""
     local hits=0
     for run in 1 2 3; do
-        $DC exec -T monitor php /app/bin/collector.php uptime > /tmp/e2e-uptime-$run.out 2>&1 || true
+        $DC exec -T monitor sh -c "cd /app/laravel && php artisan collector:uptime" > /tmp/e2e-uptime-$run.out 2>&1 || true
         local down_state
         down_state=$(grep -E '^down' /tmp/e2e-uptime-$run.out | awk '{print $2}' || echo "")
         printf '  probe %d: down=%s\n' "$run" "${down_state:-unknown}" >&2
@@ -275,7 +275,7 @@ assert_q3() {
 assert_idempotent() {
     log "Re-running para idempotencia (EV-11)…"
     # Segunda ejecución de deep y comparar estados.
-    $DC exec -T monitor php /app/bin/collector.php deep > /tmp/e2e-deep2.out 2>&1 || true
+    $DC exec -T monitor sh -c "cd /app/laravel && php artisan collector:deep" > /tmp/e2e-deep2.out 2>&1 || true
     TOTAL=$((TOTAL + 1))
     if diff -q /tmp/e2e-deep.out /tmp/e2e-deep2.out >/dev/null 2>&1; then
         ok "re-run idéntico (sin residual state)"
