@@ -14,3 +14,6 @@ vendor/
 
 # Engram local config
 .engram/
+
+# Tooling local (skill registry cache)
+.atl/
