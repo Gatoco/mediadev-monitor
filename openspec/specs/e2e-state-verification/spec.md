@@ -1,6 +1,6 @@
 # E2E State Verification Specification
 
-> Capability: `e2e-state-verification` — NEW full spec. Asserts `bin/mediadev check all` and `bin/collector.php deep` classify each of the 5 fixtures into the exact expected `SiteState`, with correct exit codes; verifies Q#3 tokenless-first + 3-strike down detection end-to-end.
+> Capability: `e2e-state-verification` — Asserts `php artisan monitor:check all` and `php artisan collector:deep` classify each of the 5 fixtures into the exact expected `SiteState`, with correct exit codes; verifies Q#3 tokenless-first + 3-strike down detection end-to-end. Command surface moved from `bin/*` to artisan (EV-A1).
 
 ## Purpose
 
@@ -11,10 +11,10 @@ MUST provide a deterministic assertion layer over the monitor's classification p
 | ID | Requirement |
 |----|-------------|
 | EV-01 | A verification script MUST assert each fixture's classified `SiteState` equals its expected seed state. |
-| EV-02 | `check all` MUST exit 0 when no fixture is critical. |
-| EV-03 | `check all` MUST exit 1 when at least one fixture is `down` or RED-critical. |
-| EV-04 | `collector.php deep` MUST follow the same exit-code semantics as `check all`. |
-| EV-05 | Both commands MUST exit 2 on usage/config errors. |
+| EV-02 | `php artisan monitor:check all` MUST exit 0 when no fixture is critical. |
+| EV-03 | `php artisan monitor:check all` MUST exit 1 when at least one fixture is `down` or RED-critical. |
+| EV-04 | `php artisan collector:deep` MUST follow the same exit-code semantics as `monitor:check all`. |
+| EV-05 | Both artisan commands MUST exit 2 on usage/config errors. |
 | EV-06 | `down` fixture MUST become `down` only after 3 consecutive failed probes (3-strike rule). |
 | EV-07 | Recovery from `down` MUST reset the failure counter; next success MUST NOT stay `down`. |
 | EV-08 | Verification MUST exercise Q#3 tokenless-first: public `/wp/v2/posts` 200 MUST be available without AP. |
@@ -22,6 +22,7 @@ MUST provide a deterministic assertion layer over the monitor's classification p
 | EV-10 | Verification MUST assert no false positives: `wp-full` ≠ `wp-degraded`; `non-wp` ≠ `wp-full`. |
 | EV-11 | Running verification twice in succession MUST yield identical classifications (idempotent). |
 | EV-12 | Verification MUST emit a per-fixture row + overall PASS/FAIL summary. |
+| EV-A1 | `php artisan collector:deep` and `php artisan monitor:check all` MUST emit per-site rows in a format grep-compatible with the `e2e-assert.sh` assertions (state column extractable via `awk '{print $2}'`). |
 
 ### Expected fixture → state matrix
 
@@ -37,25 +38,30 @@ MUST provide a deterministic assertion layer over the monitor's classification p
 
 ### EV-01 / EV-10 — Per-fixture classification
 **Given** all 5 fixtures healthy (except `down`)
-**When** `collector.php deep` runs against the seeded config
+**When** `php artisan collector:deep` runs against the seeded config
 **Then** each fixture's classified state MUST equal its expected; `wp-full` MUST NOT be `wp-degraded`; `non-wp` MUST NOT be `wp-full`.
 
 ### EV-02 — Clean exit
 **Given** only non-critical fixtures present
-**When** `check all` runs, it MUST exit 0.
+**When** `php artisan monitor:check all` runs, it MUST exit 0.
 
 ### EV-03 — Critical exit
 **Given** the `down` and `wp-outdated` fixtures present
-**When** `check all` runs, it MUST exit 1.
+**When** `php artisan monitor:check all` runs, it MUST exit 1.
 
 ### EV-04 / EV-05 — Exit semantics
 **Given** a misconfigured `sites.php`
-**When** either command runs, it MUST exit 2 with a config error.
+**When** either artisan command runs, it MUST exit 2 with a config error.
 
 ### EV-06 — 3-strike down
 **Given** `down` is unreachable
-**When** fewer than 3 consecutive probes fail, state MUST NOT yet be `down`
+**When** fewer than 3 consecutive probes fail via `php artisan collector:uptime`, state MUST NOT yet be `down`
 **When** the 3rd consecutive failure occurs, state MUST become `down`.
+
+### EV-A1 — Artisan output parity
+**Given** the `wp-full` fixture is healthy
+**When** `php artisan collector:deep` runs
+**Then** output MUST contain a row matching `^wp-full\b` with the state column extractable by `awk '{print $2}'`; `php artisan monitor:check all` output MUST match the `e2e-assert.sh` grep patterns for per-fixture state extraction.
 
 ### EV-07 — Recovery reset
 **Given** a fixture is `down`
