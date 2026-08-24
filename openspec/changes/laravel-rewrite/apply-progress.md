@@ -14,6 +14,30 @@ Implemented PR 2 (Phase 3.1-3.4 + RED tests 4.1-4.5) of the `laravel-rewrite` ch
 - [x] 4.3 RED test: artisan exits 2 on config error (`monitor:check` unknown target; missing config path returns empty sites — see note)
 - [x] 4.4 RED test: scheduler registers uptime at 5-min boundary
 - [x] 4.5 RED test: scheduler registers deep at 6-hour boundary
+- [x] 3.5 `SiteResource` — List/View/Edit (no Create), state badge color-coded (FD-01, FD-02, FD-08)
+- [x] 3.6 Widgets — `SiteStatsOverview` (4 stats) + `RecentChecksTable` (eager-loaded) (FD-04, FD-05)
+
+## PR 3 Evidence (Filament dashboard)
+
+| Evidence | Value |
+|----------|-------|
+| Focused test command | `docker run --rm -v "$PWD/laravel:/app" -w /app php:8.3-cli-intl php vendor/phpunit/phpunit/phpunit tests/Feature/FilamentDashboardTest.php` |
+| Test result | OK (3 tests) — login renders, sites list ≤10 queries, dashboard renders |
+| N+1 measurement | 6 queries for 28 sites (budget 10) — no N+1 |
+| Full suite | OK (27 tests, 46 assertions) |
+| Runtime harness | `php artisan serve` + curl: `/admin/login` 200, `/admin/sites` 302 (auth) |
+| Rollback boundary | `laravel/app/Filament/`, `AdminPanelProvider`, `bootstrap/providers.php` — removable without touching commands/domain |
+
+## PR 3 Key Decisions / Deviations
+- Filament v4 API confirmed from local vendor: `Filament\Schemas\Schema` for form/infolist (not `Filament\Forms\Form`), actions in `Filament\Actions\ViewAction/EditAction` (not `Filament\Tables\Actions`), `StatsOverviewWidget\Stat::make()`, non-static `$pollingInterval`.
+- `User` implements `FilamentUser::canAccessPanel()` → required, otherwise Filament returns 403 in non-local envs (LA-05).
+- `ext-intl` is REQUIRED at runtime by Filament (pagination `Number::format`): built local `php:8.3-cli-intl` test image; the real Dockerfile (PR 4) must install `libicu-dev` + `docker-php-ext-install intl`.
+- `navigationIcon` property type: `protected static string | BackedEnum | null` — the `BackedEnum` type must be imported or the class fails to load.
+- Swapped the scaffold's `#[Fillable]` attribute on `User` for classic `$fillable` — the attribute form didn't work in this scaffold (MassAssignmentException in tests).
+- Widget `SiteStatsOverview` counts `down` from DB state and `red` severity via `whereHas('latestVersion')` — single queries, no N+1.
+
+## Status
+13/19 tasks complete (PR 1: 6, PR 2: 9, PR 3: 2 + evidence). Next: PR 4 (E2E re-target + Docker intl + cleanup + docs).
 
 ## Work Unit Evidence
 

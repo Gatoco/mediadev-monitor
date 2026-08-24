@@ -46,8 +46,8 @@ Chain strategy: stacked-to-main
 - [x] 3.2 Create `app/Console/Commands/CollectorDeepCommand.php` exiting 0/1/2 with `name  state` output (AC-02, AC-04..AC-07)
 - [x] 3.3 Create `app/Console/Commands/CheckAllCommand.php` exiting 0/1/2 with grep-compatible output (AC-03..AC-09)
 - [x] 3.4 Wire scheduler in `routes/console.php`: uptime every 5min, deep every 6h (LA-06, LA-07)
-- [ ] 3.5 Create `app/Filament/Resources/SiteResource.php` with List/View/Edit, no Create (FD-01, FD-02, FD-08)
-- [ ] 3.6 Create `app/Filament/Widgets/*Widget.php` with eager-loaded queries (FD-04, FD-05)
+- [x] 3.5 Create `app/Filament/Resources/SiteResource.php` with List/View/Edit, no Create (FD-01, FD-02, FD-08)
+- [x] 3.6 Create `app/Filament/Widgets/*Widget.php` with eager-loaded queries (FD-04, FD-05)
 
 ## Phase 4: Testing / RED Tests
 
