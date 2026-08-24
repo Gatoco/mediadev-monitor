@@ -23,7 +23,6 @@ class RecentChecksTable extends TableWidget
                 Site::query()
                     ->with(['latestUptime', 'latestVersion'])
                     ->orderByDesc('updated_at')
-                    ->limit(10)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
