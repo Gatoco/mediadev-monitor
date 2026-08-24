@@ -12,6 +12,9 @@ class VersionSnapshot extends Model
 
     protected $table = 'version_snapshots';
 
+    // Legacy schema has no created_at/updated_at on snapshot tables.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];

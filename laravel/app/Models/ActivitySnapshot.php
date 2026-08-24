@@ -12,6 +12,9 @@ class ActivitySnapshot extends Model
 
     protected $table = 'activity_snapshots';
 
+    // Legacy schema has no created_at/updated_at on snapshot tables.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];

@@ -12,6 +12,9 @@ class SiteHealthSnapshot extends Model
 
     protected $table = 'site_health_snapshots';
 
+    // Legacy schema has no created_at/updated_at on snapshot tables.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];

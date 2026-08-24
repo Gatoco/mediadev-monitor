@@ -12,6 +12,9 @@ class UptimeCheck extends Model
 
     protected $table = 'uptime_checks';
 
+    // Legacy schema has no created_at/updated_at on snapshot tables.
+    public $timestamps = false;
+
     protected $casts = [
         'ts' => 'datetime',
     ];
