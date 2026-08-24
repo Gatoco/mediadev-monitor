@@ -170,6 +170,58 @@ services:
       - net-sites
     # Sin healthcheck: el contenedor permanece "running" pero no escucha nada.
 
+  # --- Portfolio emulator (28 sitios reales de mediadev.cl, 1 contenedor) ---
+  # Emula los sitios del portafolio respondiendo por Host header (router.php).
+  # Los network aliases hacen que el monitor resuelva http://<sitio>:80 hacia
+  # este contenedor. hotelvivomontana.cl y septimaruta.cl (DOWN real) van como
+  # contenedores sin listener, igual que el fixture down del stack E2E.
+  portfolio-emulator:
+    image: mediadev/portfolio-emulator
+    build: ./docker/portfolio-emulator
+    container_name: mediadev-portfolio
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      net-sites:
+        aliases:
+          - diariotalca.cl
+          - casa-humana.cl
+          - agriculthor.cl
+          - aikidomaipukai.com
+          - alimentate.cl
+          - cardiomedica.cl
+          - carrosdelmaule.cl
+          - cecinasdonjacinto.cl
+          - conequip.cl
+          - estadioespanoltalca.cl
+          - hubot.cl
+          - innovacion.ucm.cl
+          - integravita.cl
+          - itma.cl
+          - laboratorioaleman.cl
+          - macmedica.cl
+          - mapeko.org
+          - meymaq.cl
+          - morissalud.cl
+          - myfcardiosalud.cl
+          - okrental.cl
+          - radiataforestal.cl
+          - servivalchile.cl
+          - villalegre.cl
+          - vinadetoroalexander.cl
+          - mediadev.cl
+
+  portfolio-down:
+    image: mediadev/down
+    container_name: mediadev-portfolio-down
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      net-sites:
+        aliases:
+          - hotelvivomontana.cl
+          - septimaruta.cl
+
   # --- wp-cli oneshots (crean usuario monitor + AP en cada fixture WP) ---
   # Escriben el token en /ap-tokens/<FIXTURE_NAME>.token (volumen compartido D6).
 
