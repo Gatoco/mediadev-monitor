@@ -1,11 +1,16 @@
 <?php
 
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\StatusController;
 use Illuminate\Support\Facades\Route;
 
-// Demo pública read-only (sin auth) — antes del redirect para que gane.
+// Vistas públicas read-only (sin auth) — antes del redirect para que ganen.
 Route::get('/demo', [DemoController::class, 'page'])->name('demo.page');
-Route::get('/status.json', [DemoController::class, 'json'])->name('demo.json');
+Route::get('/demo.json', [DemoController::class, 'json'])->name('demo.json');
 
-// Entrar al dominio = ir directo al panel de monitoreo (la demo).
-Route::redirect('/', '/demo');
+// Mission Control: estado en vivo (polling 5s). /live = mismo panel en modo kiosko.
+Route::get('/status', [StatusController::class, 'index'])->name('status.page');
+Route::get('/live', [StatusController::class, 'index'])->name('status.live');
+Route::get('/status.json', [StatusController::class, 'json'])->name('status.json');
+
+Route::redirect('/', '/status');

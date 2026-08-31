@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SiteResource\Pages;
+use App\Filament\Resources\SiteResource\RelationManagers;
 use App\Models\Site;
 use App\Services\WordPress\WpTokenVerifier;
 use BackedEnum;
@@ -316,6 +317,16 @@ class SiteResource extends Resource
                 SiteState::NON_WP->value,
             ])
             ->with(['latestUptime', 'latestVersion', 'latestHealth', 'latestActivity']);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\UptimeChecksRelationManager::class,
+            RelationManagers\VersionSnapshotsRelationManager::class,
+            RelationManagers\SiteHealthSnapshotsRelationManager::class,
+            RelationManagers\ActivitySnapshotsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
