@@ -5,10 +5,13 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/security.php';
 
 use MediadevMonitor\Auth\Auth;
 use MediadevMonitor\Dashboard\Dashboard;
 use MediadevMonitor\Infra\Config;
+
+send_security_headers();
 
 $config = new Config();
 $auth = new Auth($config);
@@ -49,7 +52,7 @@ require __DIR__ . '/layout.php';
 
         <div class="site-grid">
             <?php foreach ($visible as $site): ?>
-            <a class="site-card" href="site.php?id=<?= $site['id'] ?>">
+            <a class="site-card <?= $site['semaphore'] ?>" href="site.php?id=<?= $site['id'] ?>">
                 <div class="card-top">
                     <span class="dot <?= $site['semaphore'] ?>"></span>
                     <span class="site-name"><?= htmlspecialchars($site['name']) ?></span>

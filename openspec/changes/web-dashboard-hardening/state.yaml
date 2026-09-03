@@ -1,0 +1,11 @@
+schema: spec-driven
+change: web-dashboard-hardening
+phases:
+  explore: done
+  propose: done
+  spec: done
+  design: done
+  tasks: done
+  apply: done
+  verify: done
+  archive: pending

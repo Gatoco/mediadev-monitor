@@ -5,23 +5,36 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/security.php';
 
 use MediadevMonitor\Auth\Auth;
+use MediadevMonitor\Auth\RateLimit;
 use MediadevMonitor\Infra\Config;
+
+send_security_headers();
 
 $config = new Config();
 $auth = new Auth($config);
+$rate = new RateLimit(dirname($config->dbPath()) . '/rate-limit.json');
+$ip = $_SERVER["HTTP_CF_CONNECTING_IP"] ?? $_SERVER["REMOTE_ADDR"] ?? "0.0.0.0";
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $limit = $rate->check($ip);
+    if (!$limit['allowed']) {
+        $error = 'Demasiados intentos. Intenta en ' . ceil($limit['retry_after'] / 60) . ' min.';
+    } else {
+        $username = $_POST['username'] ?? '';
+        $password = $_POST['password'] ?? '';
 
-    if ($auth->attempt($username, $password)) {
-        header('Location: index.php');
-        exit;
+        if ($auth->attempt($username, $password)) {
+            $rate->reset($ip);
+            header('Location: index.php');
+            exit;
+        }
+        $rate->recordFailure($ip);
+        $error = 'Credenciales inválidas';
     }
-    $error = 'Credenciales inválidas';
 }
 
 $auth->startSession();
@@ -36,7 +49,7 @@ $auth->startSession();
 </head>
 <body class="view-login">
     <div class="card">
-        <h1>🔭 Mediadev Monitor</h1>
+        <h1><span class="brand-dot" aria-hidden="true"></span>Mediadev Monitor</h1>
         <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
         <form method="POST">
             <input type="text" name="username" placeholder="Usuario" required autofocus>

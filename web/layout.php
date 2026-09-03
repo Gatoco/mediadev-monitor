@@ -45,7 +45,7 @@ $dot = ['all' => 'muted', 'red' => 'red', 'yellow' => 'yellow', 'green' => 'gree
 <body class="app">
 <aside class="sidebar">
     <div class="brand">
-        <span class="brand-logo">🔭</span>
+        <span class="brand-dot" aria-hidden="true"></span>
         <div>
             <div class="brand-name">Mediadev Monitor</div>
             <div class="brand-sub">Sitios registrados</div>

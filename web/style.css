@@ -93,3 +93,29 @@ a { color: var(--accent); }
 .view-login input { width: 100%; padding: .6rem; margin-bottom: .8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
 .view-login button { width: 100%; padding: .6rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font-weight: 600; cursor: pointer; }
 .view-login .error { color: var(--red); font-size: .85rem; margin-bottom: .8rem; text-align: center; }
+
+/* ---------- hardening: brand-dot (reemplaza emoji) ---------- */
+.brand-dot {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(79,140,255,.6);
+  flex-shrink: 0;
+}
+.view-login h1 .brand-dot { margin-right: .4rem; vertical-align: -1px; }
+
+/* ---------- vista mejorada: cards con borde semáforo ---------- */
+.site-card { border-left: 3px solid var(--border); }
+.site-card.red { border-left-color: var(--red); }
+.site-card.yellow { border-left-color: var(--yellow); }
+.site-card.green { border-left-color: var(--green); }
+.site-card:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+
+/* badges más legibles */
+.badge { font-weight: 500; }
+.state-badge { font-weight: 600; }
+
+/* login: marca + foco */
+.view-login .card { box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.view-login input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
