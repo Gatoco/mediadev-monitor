@@ -17,7 +17,7 @@ services:
     container_name: mediadev-monitor
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     networks:
       - net-sites   # para sondear los fixtures (resuelve wp-full, wp-outdated, ...)
       - net-monitor # para exponer el dashboard 8080
@@ -46,6 +46,7 @@ services:
     # --skip-ssl: MySQL 8.0 habilita SSL por defecto; lo desactivamos para que
     # wp-cli (cliente MariaDB) y los fixtures conecten sin certificados.
     command: --skip-ssl
+    mem_limit: 256m
     environment:
       - MYSQL_DATABASE=wp_full
       - MYSQL_USER=wp
