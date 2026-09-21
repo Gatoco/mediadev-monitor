@@ -102,7 +102,7 @@ php artisan serve
 ```bash
 docker compose up -d
 # Dashboard en http://localhost:8080/admin
-# Scheduler: uptime cada 5 min, deep cada 6h (una línea de cron)
+# Scheduler: uptime cada 5 min, deep cada 6h, notify diff cada 5 min + digest horario
 ```
 
 ## Uso
@@ -121,9 +121,38 @@ php artisan collector:deep
 
 # Listar sitios registrados
 php artisan monitor:check --list
+
+# Agente de notificaciones (diff de eventos + resumen por hora)
+php artisan notify:status                    # dispara según hallazgos
+php artisan notify:status --no-channels      # imprime sin enviar (debug)
+php artisan notify:status --json             # salida en JSON
+php artisan notify:status --digest           # fuerza el resumen aunque no haya eventos
 ```
 
 Exit codes: `0` = todo OK · `1` = hay sitios caídos/críticos · `2` = error de uso/config
+
+### Notificaciones (Telegram + Email)
+
+El agente corre dentro del contenedor `monitor` via scheduler (`Schedule::command(NotifyStatusCommand::class)->everyFiveMinutes()` + `->hourly()` para el digest). Compara el último uptime check con el anterior, detecta:
+
+- **down nuevo**: sitio entra en estado `down`.
+- **recuperación / falso positivo**: sitio vuelve tras un down corto (`< NOTIFY_RECOVERY_WINDOW` min) — se notifica como recuperación, no como alerta escalada.
+- **versión WP actualizada**: core_version cambió entre los dos últimos snapshots de versión.
+- **resumen horario**: conteo de checks, fallos, disponibilidad, latencia media, estados y severidades.
+
+Canal Telegram vía HTTP API (curl nativo, cero dependencias) y canal email por el mailer Laravel (`MAIL_MAILER`). Si un canal no tiene credenciales configuradas se salta sin fallar.
+
+Configuración **por entorno** (`.env` del contenedor, gitignored):
+
+```bash
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...              # token del BotFather
+TELEGRAM_CHAT_ID=123456789                        # chat_id destino
+NOTIFY_EMAIL_TO=ops@mediadev.cl,tio@mediadev.cl   # vacío = canal email off
+NOTIFY_RECOVERY_WINDOW=15                         # min → falso positivo
+MAIL_MAILER=log                                   # o smtp para salida real
+```
+
+Con `MAIL_MAILER=log` los correos van a `storage/logs/laravel.log` (útil para staging). Para SMTP real: `MAIL_MAILER=smtp` + `MAIL_HOST`/`MAIL_PORT`/`MAIL_USERNAME`/`MAIL_PASSWORD`.
 
 ### Configuración de sitios
 
@@ -141,6 +170,8 @@ return [
 ```
 
 Los **Application Passwords** se generan en cada sitio WordPress: *Usuarios → Perfil → Application Passwords* (WP 5.6+). El tío no necesita instalar ningún plugin.
+
+Alternativamente, desde el panel (Sitios → Editar) el usuario puede cargar el **wp_user** y el **ap_token** directamente en la UI — el campo `ap_token` es *password reveal* y sólo se persiste si se edita (dejarlo en blanco conserva el token anterior).
 
 ## Verificación E2E
 

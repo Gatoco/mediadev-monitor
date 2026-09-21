@@ -35,7 +35,14 @@ COPY laravel/.env.example /app/laravel/.env
 
 # Instalar dependencias, generar APP_KEY y publicar assets de Filament
 # (sin filament:assets el panel sirve CSS/JS 404 → login no funciona).
+# Composer: timeout alto; --prefer-dist para paquetes zip (más rápido y
+# menos frágil detrás de NAT); network=host en el build porque la bridge
+# por defecto de este host no tiene salida a internet durante el build.
+ENV COMPOSER_PROCESS_TIMEOUT=1200 \
+    COMPOSER_ALLOW_SUPERUSER=1
+
 RUN composer install --no-dev --no-interaction --optimize-autoloader \
+        --prefer-dist \
     && php artisan key:generate \
     && php artisan filament:assets
 

@@ -16,6 +16,7 @@ class Site extends Model
 
     protected $casts = [
         'current_state' => SiteState::class,
+        'wp_token_checked_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -26,6 +27,9 @@ class Site extends Model
         'type',
         'wp_user',
         'ap_token',
+        'wp_token_status',
+        'wp_token_message',
+        'wp_token_checked_at',
         'consecutive_failures',
         'current_state',
     ];

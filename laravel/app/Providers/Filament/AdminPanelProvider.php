@@ -9,6 +9,8 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentView;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -28,8 +30,16 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                // ponytail: hex directo para casar con el ADN t420.dev (rojo #e2231a)
+                'primary' => Color::hex('#e2231a'),
+                // Paleta de estados — sobria, legible, coherente con el ADN t420.dev
+                'danger' => Color::hex('#e2231a'),    // down
+                'warning' => Color::hex('#f9a825'),   // wp-degraded
+                'success' => Color::hex('#3fae4a'),   // wp-full
+                'info' => Color::hex('#0ea5b7'),      // non-wp
+                'gray' => Color::hex('#6b6b6b'),      // unknown
             ])
+            ->favicon(asset('favicon.svg'))
             ->brandName('Mediadev Monitor')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -54,6 +64,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => '<link rel="stylesheet" href="' . asset('css/mediadev-dashboard.css') . '" />',
+            );
     }
 }

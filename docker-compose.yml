@@ -30,6 +30,20 @@ services:
     environment:
       # DB compartida con el volumen; el .env de Laravel apunta aquí.
       - DB_DATABASE=/var/lib/mediadev/data/mediadev.sqlite
+      # Agente de notificaciones (config/notifications.php los consume).
+      # Vacíos = canal deshabilitado. Ver laravel/.env.example.
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - NOTIFY_EMAIL_TO=${NOTIFY_EMAIL_TO:-}
+      - NOTIFY_RECOVERY_WINDOW=${NOTIFY_RECOVERY_WINDOW:-15}
+      # Email: MAIL_MAILER=log va a storage/logs (default). Para SMTP real:
+      # MAIL_MAILER=smtp, MAIL_HOST=..., MAIL_PORT=587, MAIL_USERNAME, MAIL_PASSWORD.
+      - MAIL_MAILER=${MAIL_MAILER:-log}
+      - MAIL_HOST=${MAIL_HOST:-127.0.0.1}
+      - MAIL_PORT=${MAIL_PORT:-2525}
+      - MAIL_USERNAME=${MAIL_USERNAME:-null}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-null}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-mediadev@localhost}
     depends_on:
       mysql:
         condition: service_healthy
