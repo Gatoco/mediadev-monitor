@@ -13,7 +13,13 @@
 
 services:
   monitor:
-    build: .
+    build:
+      context: .
+      # El bridge default de Docker no resuelve DNS en este host (el
+      # resolv.conf del host apunta a un nameserver que no responde).
+      # Las redes custom sí, via 127.0.0.11, pero el build corre en el
+      # bridge default. Red host solo para el build: apt/composer resuelven.
+      network: host
     container_name: mediadev-monitor
     restart: unless-stopped
     ports:
