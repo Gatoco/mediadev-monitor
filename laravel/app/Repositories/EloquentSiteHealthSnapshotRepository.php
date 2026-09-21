@@ -15,6 +15,7 @@ class EloquentSiteHealthSnapshotRepository implements SiteHealthSnapshotReposito
     {
         $this->model->create([
             'site_id' => $siteId,
+            'ts' => now(),
             'tests_json' => json_encode(['tests' => $tests, 'unavailable' => $unavailable]),
             'score' => $score,
         ]);

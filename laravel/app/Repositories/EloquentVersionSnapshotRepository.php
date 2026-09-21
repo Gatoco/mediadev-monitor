@@ -15,6 +15,7 @@ class EloquentVersionSnapshotRepository implements VersionSnapshotRepository
     {
         $this->model->create([
             'site_id' => $siteId,
+            'ts' => now(),
             'core_version' => $core,
             'plugins_json' => json_encode($plugins),
             'themes_json' => json_encode($themes),

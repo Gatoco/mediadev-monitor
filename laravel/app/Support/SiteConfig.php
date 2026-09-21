@@ -20,6 +20,13 @@ final class SiteConfig
      */
     public static function sites(): array
     {
+        // Tests must never reach the production site list: the Collector
+        // singleton syncs this config on boot, so a real config/sites.php
+        // would make every test probe 28 live hosts (10s timeout each).
+        if (app()->runningUnitTests()) {
+            return [];
+        }
+
         $file = config('mediadev.sites_file');
 
         if (!is_file($file)) {

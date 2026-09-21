@@ -32,7 +32,7 @@ return new class extends Migration
             Schema::create('uptime_checks', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-                $table->timestamp('ts')->default(now());
+                $table->timestamp('ts')->useCurrent();
                 $table->integer('status')->nullable();
                 $table->integer('response_ms')->nullable();
                 $table->string('tls_state')->nullable();
@@ -44,7 +44,7 @@ return new class extends Migration
             Schema::create('version_snapshots', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-                $table->timestamp('ts')->default(now());
+                $table->timestamp('ts')->useCurrent();
                 $table->string('core_version')->nullable();
                 $table->text('plugins_json')->nullable();
                 $table->text('themes_json')->nullable();
@@ -58,7 +58,7 @@ return new class extends Migration
             Schema::create('site_health_snapshots', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-                $table->timestamp('ts')->default(now());
+                $table->timestamp('ts')->useCurrent();
                 $table->text('tests_json')->nullable();
                 $table->integer('score')->nullable();
             });
@@ -69,7 +69,7 @@ return new class extends Migration
             Schema::create('activity_snapshots', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('site_id')->constrained('sites')->cascadeOnDelete();
-                $table->timestamp('ts')->default(now());
+                $table->timestamp('ts')->useCurrent();
                 $table->text('posts_json')->nullable();
             });
         }

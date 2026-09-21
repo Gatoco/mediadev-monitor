@@ -15,6 +15,7 @@ class EloquentActivitySnapshotRepository implements ActivitySnapshotRepository
     {
         $this->model->create([
             'site_id' => $siteId,
+            'ts' => now(),
             'posts_json' => json_encode(['posts' => $posts, 'unavailable' => $unavailable]),
         ]);
     }

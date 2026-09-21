@@ -16,6 +16,7 @@ class EloquentUptimeCheckRepository implements UptimeCheckRepository
     {
         $this->model->create([
             'site_id' => $siteId,
+            'ts' => now(),
             'status' => $result->status === 0 ? null : $result->status,
             'response_ms' => $result->responseMs,
             'tls_state' => $result->tlsState,
