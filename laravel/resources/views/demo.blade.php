@@ -17,7 +17,7 @@
       <p class="dm-sub">{{ $total }} sitios monitoreados ahora mismo — sin instalar nada en ellos. Última medición: {{ $lastCheck }}.</p>
       <div class="dm-cta">
         <a class="dm-btn dm-btn-primary" href="https://mediadev.t420.dev">Volver a la ficha</a>
-        <a class="dm-btn dm-btn-ghost" href="https://panel.t420.dev/admin">Panel completo</a>
+        <a class="dm-btn dm-btn-ghost" href="/admin">Panel completo</a>
       </div>
     </header>
 
@@ -45,7 +45,7 @@
     <footer class="dm-foot">
       <a href="https://mediadev.t420.dev">mediadev.t420.dev</a>
       <span>·</span>
-      <a href="https://panel.t420.dev/admin">Panel Filament (login)</a>
+      <a href="/admin">Panel Filament (login)</a>
       <span>·</span>
       <a href="https://github.com/Gatoco/mediadev-monitor">GitHub</a>
       <span class="dm-note">Demo — se actualiza cada 5 min</span>

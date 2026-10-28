@@ -68,6 +68,15 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => '<link rel="stylesheet" href="' . asset('css/mediadev-dashboard.css') . '" />',
+            )
+            // Acceso al panel público (/demo), que vive fuera de /admin.
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): string => <<<'HTML'
+                    <a href="/demo" class="fi-topbar-item-btn" title="Panel público: semáforo en vivo">
+                        <span class="fi-topbar-item-label">Panel público</span>
+                    </a>
+                    HTML,
             );
     }
 }
