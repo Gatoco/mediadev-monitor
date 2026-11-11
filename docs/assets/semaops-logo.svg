@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="160" height="120" role="img" aria-labelledby="semaops-title semaops-desc">
+  <title id="semaops-title">SemaOPS</title>
+  <desc id="semaops-desc">Semáforo tricolor con onda de monitoreo en pulso</desc>
+  <!-- Carcasa del semáforo -->
+  <rect x="56" y="6" width="48" height="72" rx="14" fill="#334155"/>
+  <!-- Luces: rojo (crítico), ámbar (advertencia), verde (sano) -->
+  <circle cx="80" cy="22" r="9" fill="#dc2626"/>
+  <circle cx="80" cy="42" r="9" fill="#f59e0b"/>
+  <circle cx="80" cy="62" r="9" fill="#16a34a"/>
+  <!-- Onda de pulso -->
+  <polyline points="8,100 44,100 54,86 66,112 78,94 90,100 152,100" fill="none" stroke="#16a34a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
