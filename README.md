@@ -1,49 +1,67 @@
-```
-    __  ___         ___           __         
-   /  |/  /__  ____/ (_)___ _____/ /__ _   __
-  / /|_/ / _ \/ __  / / __ `/ __  / _ \ | / /
- / /  / /  __/ /_/ / / /_/ / /_/ /  __/ |/ / 
-/_/  /_/\___/\__,_/_/\__,_/\__,_/\___/|___/  
-                                             
-    __  ___            _ __            
-   /  |/  /___  ____  (_) /_____  _____
-  / /|_/ / __ \/ __ \/ / __/ __ \/ ___/
- / /  / / /_/ / / / / / /_/ /_/ / /    
-/_/  /_/\____/_/ /_/_/\__/\____/_/     
-                                       
-```
+<div align="center">
 
-# Mediadev Monitor
+<img src="docs/assets/semaops-logo.svg" alt="SemaOPS" width="140" />
 
-**Framework open source para monitorear múltiples sitios WordPress desde un solo dashboard.**
+# MediaDev Monitor
 
-Mediadev Monitor permite a agencias y dueños de sitios web controlar el estado de todas sus páginas en un solo lugar: disponibilidad (uptime), versiones y updates pendientes, salud del sitio (Site Health), actividad reciente y más — sin instalar ningún plugin en los sitios monitoreados.
+### by SemaOPS
 
-> Proyecto académico — Innovación y Emprendimiento III (FGIE03), 2do semestre 2026.
-> Cliente real: MediaDev.CL — agencia de diseño web en Talca, Chile (28 sitios monitoreados).
+*"Tu software, siempre en verde."*
 
-## Características
+[![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com/)
+[![Filament](https://img.shields.io/badge/Filament-v4-F59E0B?style=flat-square)](https://filamentphp.com/)
+[![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![SQLite](https://img.shields.io/badge/SQLite-embebido-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![ODS 8](https://img.shields.io/badge/ODS%208-Trabajo%20Decente-A21942?style=flat-square)](https://www.un.org/sustainabledevelopment/es/economic-growth/)
+[![ODS 9](https://img.shields.io/badge/ODS%209-Industria%2C%20Innovaci%C3%B3n-FD6925?style=flat-square)](https://www.un.org/sustainabledevelopment/es/infrastructure/)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-16a34a?style=flat-square)](LICENSE)
+[![Zero-Plugins](https://img.shields.io/badge/verificaci%C3%B3n-Zero--Plugins-16a34a?style=flat-square)](#caracter%C3%ADsticas--arquitectura)
 
-- **Monitoreo de uptime** — HTTP check cada 5 minutos con umbral de 3 fallos consecutivos
-- **Versiones y updates pendientes** — core, plugins y temas con severidad (core=rojo, plugins/temas=amarillo)
-- **Site Health** — métricas de salud vía WordPress REST API (Application Passwords)
-- **Actividad reciente** — últimas publicaciones por sitio
-- **Detección automática** — clasifica WP vs no-WP; degrada a uptime-only cuando REST no está disponible
-- **Dashboard Filament** — panel admin moderno con semáforo unificado y widgets
-- **CLI** — `php artisan monitor:check all` para monitoreo desde terminal
-- **Docker** — despliegue en un comando, SQLite embebido, scheduler integrado
+**Software que se entiende de un vistazo.**
 
-## Stack
+Monitoreo de disponibilidad, versiones, Site Health y diagnóstico de sitios WordPress, **sin instalar plugins** en los sitios monitoreados.
 
-| Componente | Tecnología |
-|------------|------------|
-| Framework | Laravel 12 + Filament v4 (PHP 8.3) |
-| Base de datos | SQLite (embebido) — Eloquent ORM |
-| Dashboard | Filament admin panel (login, SiteResource, widgets) |
-| CLI | Artisan commands con exit codes 0/1/2 |
-| Despliegue | Docker + docker-compose + Laravel Scheduler |
+</div>
 
-## Arquitectura
+---
+
+## Estado de la cartera (en vivo)
+
+Semáforo de 4 estados sobre los 28 sitios del portafolio de MediaDev.CL:
+
+| Estado | Sitios | Qué significa |
+|:--|--:|:--|
+| 🟢 `WP-FULL` | **23** | WordPress accesible por REST con Application Passwords. Monitoreo completo. |
+| 🟡 `WP-DEGRADED` | **1** | WordPress detectado, pero REST o tokens no disponibles. Sólo uptime y versión básica. |
+| ⚪ `NON-WP` | **2** | Sitio online que no es WordPress. Sólo uptime. |
+| 🔴 `DOWN` | **2** | Sin respuesta tras 3 fallos consecutivos. Genera alerta. |
+
+> Cifras entregadas por el equipo de SemaOPS para la demo del portafolio.
+
+---
+
+## Características & Arquitectura
+
+### Zero-plugins
+
+MediaDev Monitor no instala nada en los sitios monitoreados. Usa mecanismos nativos de WordPress:
+
+- **Application Passwords** (WP 5.6+): un token por sitio, generado desde *Usuarios → Perfil*.
+- **REST API nativa** (`/wp-json`): versiones de core, plugins, temas, Site Health y actividad reciente.
+- **Detección automática**: clasifica cada sitio como WP o no-WP y degrada a monitoreo de uptime cuando REST no responde.
+
+### Componentes
+
+- **Monitoreo de uptime**: HTTP check cada 5 minutos, con umbral de 3 fallos consecutivos.
+- **Versiones y updates pendientes**: core (rojo), plugins y temas (amarillo).
+- **Site Health y actividad reciente**: métricas vía REST con Application Passwords.
+- **Notificaciones**: agente de eventos (caída, recuperación, nueva versión) con resumen horario por Telegram y correo.
+- **Dashboard Filament** (`/admin`): panel con semáforo unificado, widgets y gestión de sitios.
+- **Página pública** (`/demo`): estado de la cartera sin login. Datos en JSON en `/status.json`.
+- **CLI**: `php artisan monitor:check all`, con exit codes `0` / `1` / `2`.
+
+### Arquitectura
 
 ```
  cron (* * * * *) → php artisan schedule:run
@@ -63,51 +81,84 @@ Mediadev Monitor permite a agencias y dueños de sitios web controlar el estado 
  Eloquent (sites, uptime_checks, version_snapshots, site_health_snapshots, activity_snapshots)
                           │
                           ├──▶ Filament panel /admin (SiteResource + widgets)
+                          ├──▶ Página pública /demo y /status.json
                           └──▶ artisan CLI (reporte terminal + exit code)
 ```
 
-El dominio (`laravel/domain/`) está aislado del framework: clases puras PHP con *repository ports* implementados por adaptadores Eloquent. La lógica de clasificación/severidad/3-strike es byte-por-byte la del framework original verificado.
+El dominio (`laravel/domain/`) está aislado del framework: clases PHP puras con *repository ports* implementados por adaptadores Eloquent. La lógica de clasificación, severidad y 3-strike es la del framework original verificado.
 
-## Instalación
+### Stack
 
-```bash
-# Clonar
-git clone https://github.com/Gatoco/mediadev-monitor.git
-cd mediadev-monitor/laravel
+| Componente | Tecnología |
+|:--|:--|
+| Framework | Laravel 12 + Filament v4 (PHP 8.3) |
+| Base de datos | SQLite embebido, Eloquent ORM |
+| Dashboard | Panel admin Filament (login, `SiteResource`, widgets) |
+| CLI | Comandos Artisan con exit codes 0/1/2 |
+| Despliegue | Docker + docker compose + Laravel Scheduler |
 
-# Instalar dependencias (requiere PHP 8.3 + ext-intl + ext-pdo_sqlite)
-composer install
+---
 
-# Configurar .env y base de datos
-cp .env.example .env
-# Editar DB_DATABASE (apunta a ../data/mediadev.sqlite por defecto)
-php artisan key:generate
-php artisan migrate
+## Quickstart con Docker
 
-# Configurar sitios (copiar plantilla en la raíz del repo)
-cp ../config/sites.example.php ../config/sites.php
-# Editar con las URLs y tokens Application Passwords
+Requisitos: Docker con el plugin `compose`.
 
-# Correr la primera recolección
-php artisan collector:uptime
-php artisan collector:deep
-
-# Panel administrativo (login: crear un usuario con tinker)
-php artisan serve
-# http://localhost:8000/admin
-```
-
-### Docker
+**1. Levantar el servicio**
 
 ```bash
 docker compose up -d
-# Dashboard en http://localhost:8080/admin
-# Scheduler: uptime cada 5 min, deep cada 6h, notify diff cada 5 min + digest horario
+```
+
+**2. Crear el usuario administrador**
+
+```bash
+docker compose exec monitor php artisan tinker
+# Dentro de tinker (la contraseña se hashea automáticamente):
+# App\Models\User::create(['name' => 'Admin', 'email' => 'tu@correo.cl', 'password' => 'cambia-esta-clave']);
+```
+
+**3. Abrir el panel**
+
+- Dashboard: <http://localhost:8080/admin>
+- Página pública: <http://localhost:8080/demo>
+
+**4. (Opcional) Emulador de portafolio**
+
+Levanta los 28 sitios de prueba del portafolio MediaDev.CL en una red Docker aislada, sin tocar sitios reales:
+
+```bash
+docker compose --profile e2e up -d
+bin/seed-portfolio.sh   # regenera config/sites.php (local, gitignored)
+```
+
+Scheduler integrado: uptime cada 5 min, recolección profunda cada 6 h, agente de notificaciones cada 5 min y resumen horario.
+
+---
+
+## Instalación local (sin Docker)
+
+```bash
+git clone https://github.com/Gatoco/mediadev-monitor.git
+cd mediadev-monitor/laravel
+
+# Requiere PHP 8.3 + ext-intl + ext-pdo_sqlite
+composer install
+
+cp .env.example .env          # DB_DATABASE apunta a ../data/mediadev.sqlite por defecto
+php artisan key:generate
+php artisan migrate
+
+# Sitios: copiar la plantilla en la raíz del repo y completar URLs y tokens
+cp ../config/sites.example.php ../config/sites.php
+
+php artisan collector:uptime
+php artisan collector:deep
+php artisan serve             # http://localhost:8000/admin
 ```
 
 ## Uso
 
-### CLI (artisan)
+### CLI (Artisan)
 
 ```bash
 # Monitorear todos los sitios (recolección profunda)
@@ -116,43 +167,43 @@ php artisan monitor:check all
 # Uptime (cadencia corta)
 php artisan collector:uptime
 
-# Recolección profunda (versiones + salud + actividad)
+# Recolección profunda (versiones, salud, actividad)
 php artisan collector:deep
 
 # Listar sitios registrados
 php artisan monitor:check --list
 
-# Agente de notificaciones (diff de eventos + resumen por hora)
+# Agente de notificaciones
 php artisan notify:status                    # dispara según hallazgos
 php artisan notify:status --no-channels      # imprime sin enviar (debug)
 php artisan notify:status --json             # salida en JSON
 php artisan notify:status --digest           # fuerza el resumen aunque no haya eventos
 ```
 
-Exit codes: `0` = todo OK · `1` = hay sitios caídos/críticos · `2` = error de uso/config
+Exit codes: `0` = todo OK · `1` = hay sitios caídos o críticos · `2` = error de uso o configuración.
 
 ### Notificaciones (Telegram + Email)
 
-El agente corre dentro del contenedor `monitor` via scheduler (`Schedule::command(NotifyStatusCommand::class)->everyFiveMinutes()` + `->hourly()` para el digest). Compara el último uptime check con el anterior, detecta:
+El agente corre en el contenedor `monitor` vía scheduler. Compara el último uptime check con el anterior y detecta:
 
-- **down nuevo**: sitio entra en estado `down`.
-- **recuperación / falso positivo**: sitio vuelve tras un down corto (`< NOTIFY_RECOVERY_WINDOW` min) — se notifica como recuperación, no como alerta escalada.
-- **versión WP actualizada**: core_version cambió entre los dos últimos snapshots de versión.
-- **resumen horario**: conteo de checks, fallos, disponibilidad, latencia media, estados y severidades.
+- **Down nuevo**: un sitio entra en estado `down`.
+- **Recuperación / falso positivo**: el sitio vuelve dentro de `NOTIFY_RECOVERY_WINDOW` minutos y se notifica como recuperación.
+- **Versión WP actualizada**: cambió el core entre los dos últimos snapshots.
+- **Resumen horario**: checks, fallos, disponibilidad, latencia media, estados y severidades.
 
-Canal Telegram vía HTTP API (curl nativo, cero dependencias) y canal email por el mailer Laravel (`MAIL_MAILER`). Si un canal no tiene credenciales configuradas se salta sin fallar.
+Canal Telegram vía HTTP API (cero dependencias) y canal email por el mailer de Laravel. Si un canal no tiene credenciales se omite sin fallar.
 
-Configuración **por entorno** (`.env` del contenedor, gitignored):
+Configuración por entorno (`.env` del contenedor, gitignored):
 
 ```bash
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...              # token del BotFather
 TELEGRAM_CHAT_ID=123456789                        # chat_id destino
-NOTIFY_EMAIL_TO=ops@mediadev.cl,tio@mediadev.cl   # vacío = canal email off
-NOTIFY_RECOVERY_WINDOW=15                         # min → falso positivo
-MAIL_MAILER=log                                   # o smtp para salida real
+NOTIFY_EMAIL_TO=ops@ejemplo.cl,otro@ejemplo.cl    # vacío = canal email desactivado
+NOTIFY_RECOVERY_WINDOW=15                         # minutos → falso positivo
+MAIL_MAILER=log                                   # o smtp para envío real
 ```
 
-Con `MAIL_MAILER=log` los correos van a `storage/logs/laravel.log` (útil para staging). Para SMTP real: `MAIL_MAILER=smtp` + `MAIL_HOST`/`MAIL_PORT`/`MAIL_USERNAME`/`MAIL_PASSWORD`.
+Con `MAIL_MAILER=log` los correos van a `storage/logs/laravel.log`, útil en staging. Para SMTP: `MAIL_MAILER=smtp` junto con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME` y `MAIL_PASSWORD`.
 
 ### Configuración de sitios
 
@@ -161,44 +212,88 @@ Con `MAIL_MAILER=log` los correos van a `storage/logs/laravel.log` (útil para s
 // config/sites.php — gitignored, no subir a repositorio
 return [
     [
-        'url'   => 'https://mediadev.cl',
-        'name'  => 'MediaDev',
+        'url'   => 'https://sitio.ejemplo.cl',
+        'name'  => 'Sitio de ejemplo',
         'type'  => 'auto',   // auto | wp | non-wp
-        'token' => 'xxxx 24-caracteres application password',  // solo para WP
+        'token' => 'xxxx xxxx xxxx xxxx xxxx xxxx',  // Application Password, sólo WP
     ],
 ];
 ```
 
-Los **Application Passwords** se generan en cada sitio WordPress: *Usuarios → Perfil → Application Passwords* (WP 5.6+). El tío no necesita instalar ningún plugin.
+Los **Application Passwords** se generan en cada sitio WordPress: *Usuarios → Perfil → Application Passwords*. No hace falta instalar ningún plugin.
 
-Alternativamente, desde el panel (Sitios → Editar) el usuario puede cargar el **wp_user** y el **ap_token** directamente en la UI — el campo `ap_token` es *password reveal* y sólo se persiste si se edita (dejarlo en blanco conserva el token anterior).
+También se pueden cargar `wp_user` y `ap_token` desde el panel (*Sitios → Editar*). El campo `ap_token` se persiste sólo si se edita; dejarlo en blanco conserva el token anterior.
 
 ## Verificación E2E
 
 ```bash
-# Levanta 5 fixtures WP + monitorea + corre 12 checks (requiere --profile e2e)
 docker compose --profile e2e up -d
 bin/e2e-assert.sh
 ```
 
-Validado de punta a punta: **12/12 checks PASS** (clasificación por fixture, 3-strike down, Q3 tokenless-first, idempotencia, exit codes) + scheduler cron real corriendo `collector:uptime`/`collector:deep` contra el volumen de datos.
+Validado de punta a punta: **12/12 checks PASS** (clasificación por fixture, 3-strike down, tokenless-first, idempotencia, exit codes), con el scheduler cron real ejecutando `collector:uptime` y `collector:deep` sobre el volumen de datos.
+
+Suite de tests: `cd laravel && php artisan test`.
+
+---
+
+## Equipo & Créditos
+
+**SemaOPS** · Software & Desarrollo Web · *Software que se entiende de un vistazo*
+
+| Cofundador | Rol |
+|:--|:--|
+| **Felipe Mardones** | Cofundador |
+| **Benjamín Cifuentes** | Cofundador |
+| **Benjamín Contesso** | Cofundador |
+
+SemaOPS nace en **INACAP Sede Talca**. MediaDev Monitor se desarrolla para el cliente **MediaDev.CL**, agencia de diseño web en Talca, Chile.
+
+Web: [semaops.cl](https://semaops.cl)
+
+---
+
+## Innovación y Emprendimiento III
+
+Proyecto académico de la asignatura **Innovación y Emprendimiento III (FGIE03)**, 2.º semestre 2026.
+
+| Entregable | Código |
+|:--|:--|
+| Storyboard con propuesta de valor | 3.1.2.1 |
+| Ficha de planificación del testeo | 3.1.2.3 |
+| Matriz CDM con propuesta de valor | 3.1.2.4 |
+| Matriz PESTAL profundizada | 3.1.4.1 |
+| Business Model Canvas V2 (MediaDev Monitor) | Recurso 3.4 |
+
+### Alineación con los ODS
+
+- **ODS 8 · Trabajo Decente y Crecimiento Económico**: reduce horas improductivas en tareas mecánicas de mantención web.
+- **ODS 9 · Industria, Innovación e Infraestructura**: digitaliza y da visibilidad operativa a pymes con monitoreo transparente.
+
+---
 
 ## Roadmap
 
 - [x] Análisis de cliente (28 sitios de MediaDev verificados)
-- [x] Propuesta y specs
+- [x] Propuesta y especificaciones
 - [x] Diseño técnico
 - [x] Migración a Laravel 12 + Filament v4
-- [x] Fase 1: Infraestructura (SQLite, REST client, config)
-- [x] Fase 2: Collectors (uptime, versiones, salud, actividad)
-- [x] Fase 3: Interfaces (CLI artisan, dashboard Filament)
-- [x] Fase 4: Docker + verificación E2E
-- [x] Fase 5: Tests + README
+- [x] Fase 1: infraestructura (SQLite, cliente REST, configuración)
+- [x] Fase 2: collectors (uptime, versiones, salud, actividad)
+- [x] Fase 3: interfaces (CLI Artisan, dashboard Filament)
+- [x] Fase 4: Docker y verificación E2E
+- [x] Fase 5: tests y documentación
+- [x] Alertas por Telegram y correo
+- [ ] Diagnóstico automatizado de logs con IA (en desarrollo)
 
 ## Licencia
 
-MIT — ver [LICENSE](LICENSE).
+MIT. Ver [LICENSE](LICENSE).
 
 ---
 
-© 2026 Mediadev Monitor · Proyecto open source para MediaDev.CL
+<div align="center">
+
+**Tu software, siempre en verde.** · © 2026 SemaOPS · semaops.cl
+
+</div>
