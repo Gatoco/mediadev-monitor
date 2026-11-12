@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Uptime: HTTP check + umbral 3 fallos consecutivos + TLS.
+ * SemaOPS — Uptime: HTTP check + umbral 3 fallos consecutivos + TLS.
  */
 
 declare(strict_types=1);

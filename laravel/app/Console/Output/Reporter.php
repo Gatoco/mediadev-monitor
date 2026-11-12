@@ -21,7 +21,7 @@ final class Reporter
     public function render(CollectionReport $report): string
     {
         $lines = [];
-        $lines[] = $this->paint("Mediadev Monitor — Reporte", 'bold');
+        $lines[] = $this->paint("SemaOPS — Reporte", 'bold');
         $lines[] = str_repeat('─', 72);
         $lines[] = sprintf("%-4s %-36s %-12s %s", 'ID', 'SITIO', 'ESTADO', 'DETALLE');
 

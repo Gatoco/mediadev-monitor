@@ -1,4 +1,4 @@
-# Mediadev Monitor — non-wp: sitio estático (nginx) que NO es WordPress.
+# SemaOPS — non-wp: sitio estático (nginx) que NO es WordPress.
 #
 # Emula un sitio no-WP real: `/` devuelve 200, `/wp-json/` devuelve 404
 # (RF-10). Degradation::classify() detecta 404 en /wp-json/ → NON_WP.

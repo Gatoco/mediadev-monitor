@@ -2,7 +2,7 @@
 
 /*
 |--------------------------------------------------------------------------
-| Mediadev Monitor — Agente de notificaciones
+| SemaOPS — Agente de notificaciones
 |--------------------------------------------------------------------------
 |
 | Canales: Telegram (HTTP API, cero dependencias) y email (mailer Laravel).

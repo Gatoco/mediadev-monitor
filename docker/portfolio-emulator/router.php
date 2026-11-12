@@ -1,6 +1,6 @@
 <?php
 /**
- * Mediadev Monitor — Portfolio Emulator.
+ * SemaOPS — Portfolio Emulator.
  *
  * Emula los 28 sitios del portafolio de MediaDev (scrapeados de mediadev.cl)
  * con 1 solo contenedor: responde según el Host header. Cada sitio replica el

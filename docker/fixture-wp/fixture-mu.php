@@ -1,6 +1,6 @@
 <?php
 /**
- * Mediadev Monitor — fixture-mu.php
+ * SemaOPS — fixture-mu.php
  *
  * MU-plugin del stack E2E que emula casos reales de MediaDev según FIXTURE_TYPE:
  *   full      → comportamiento estándar de WordPress (nada especial).

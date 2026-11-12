@@ -1,5 +1,5 @@
 #!/bin/bash
-# Mediadev Monitor — E2E state verification (realistic-sites-e2e).
+# SemaOPS — E2E state verification (realistic-sites-e2e).
 #
 # Prueba la clasificación de los 5 fixtures contra su estado esperado (RF-12/EV-01),
 # verifica invariantes (Q#3 tokenless-first, 3-strike down, idempotencia, sin
@@ -323,7 +323,7 @@ die() { printf '\033[31mERROR: %s\033[0m\n' "$*" >&2; exit 2; }
 main() {
     [ -f config/sites.example.php ] || die "ejecutar desde la raíz del repo"
 
-    log "=== Mediadev Monitor E2E Assert ==="
+    log "=== SemaOPS E2E Assert ==="
 
     # 1. Fixtures healthy
     rc=$(wait_healthy) || {

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — SiteRegistry: registro de sitios.
+ * SemaOPS — SiteRegistry: registro de sitios.
  */
 
 declare(strict_types=1);

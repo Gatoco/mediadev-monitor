@@ -54,7 +54,7 @@ Bash, `set -euo pipefail`, curl+grep, cookie jar. Env: `BASE_URL` (default `http
 |---|---|
 | unauth redirect | `302` |
 | login valid/invalid | `302`+cookie / `class="error"` |
-| dashboard | `<title>Mediadev Monitor — Dashboard</title>` |
+| dashboard | `<title>SemaOPS — Dashboard</title>` |
 | four states | `>wp-full<`, `>wp-degraded<`, `>non-wp<`, `>down<` |
 | semaphore | `dot green`/`yellow`/`red` |
 | stats | `<b style="color:#ef4444">`, `<b style="color:#f59e0b">` |

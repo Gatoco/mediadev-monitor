@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mediadev Monitor — Sala de Control (Demo)</title>
+  <title>SemaOPS — Sala de Control (Demo)</title>
   <meta name="description" content="Demo pública del semáforo unificado de MediaDev: 28 sitios WordPress monitoreados sin instalar nada." />
   <meta name="robots" content="noindex" />
   <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml" />
@@ -12,7 +12,7 @@
 <body>
   <div class="dm-wrap">
     <header class="dm-hero">
-      <span class="dm-kicker">Mediadev Monitor · Demo</span>
+      <span class="dm-kicker">SemaOPS · Demo</span>
       <h1 class="dm-h1">El semáforo de<br/>tu cartera web.</h1>
       <p class="dm-sub">{{ $total }} sitios monitoreados ahora mismo — sin instalar nada en ellos. Última medición: {{ $lastCheck }}.</p>
       <div class="dm-cta">

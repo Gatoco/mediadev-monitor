@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — SiteHealth: métricas via Application Passwords.
+ * SemaOPS — SiteHealth: métricas via Application Passwords.
  *
  * Endpoint: /wp-json/wp-site-health/v1/tests (requiere auth).
  * Tolerancia 403/404: si el endpoint falla, se registra como unavailable

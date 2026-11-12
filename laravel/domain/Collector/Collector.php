@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Collector: orquesta las recolecciones por modo.
+ * SemaOPS — Collector: orquesta las recolecciones por modo.
  *
  * modos: uptime (5 min) | deep (6h: degradación + versiones + salud + actividad)
  * La elegibilidad de cada collector depende del estado clasificado (tabla del spec).

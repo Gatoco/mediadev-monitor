@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Degradation: detección automática WP vs no-WP (Enfoque B).
+ * SemaOPS — Degradation: detección automática WP vs no-WP (Enfoque B).
  *
  * Prueba /wp-json en cada sitio. 200 → WP. 404 → non-WP (si online) o DOWN (si 000).
  * type forzado en config salta la detección. Retry 2x con backoff.

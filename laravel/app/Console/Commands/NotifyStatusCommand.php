@@ -95,7 +95,7 @@ class NotifyStatusCommand extends Command
         // Email — solo si hay destinatarios configurados.
         $email = new EmailChannel(recipients: config('notifications.emails'));
         if ($email->enabled()) {
-            $subject = strtok($text, "\n") ?: 'Evento mediadev';
+            $subject = strtok($text, "\n") ?: 'Evento SemaOPS';
             $ok = $email->send($subject, $text) || $ok;
         }
 

@@ -1,4 +1,4 @@
-# Mediadev Monitor — compose (topología realistic-sites-e2e)
+# SemaOPS — compose (topología realistic-sites-e2e)
 #
 # `docker compose up`                      → solo monitor (producción del tío).
 # `docker compose --profile e2e up -d`     → monitor + 5 fixtures + mysql + 3 wp-cli (E2E).

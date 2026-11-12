@@ -60,7 +60,7 @@ class WpTokenVerifier
             CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
             CURLOPT_USERPWD => $user . ':' . $tokenClean,
             CURLOPT_HTTPHEADER => ['Accept: application/json'],
-            CURLOPT_USERAGENT => 'mediadev-monitor/1.0',
+            CURLOPT_USERAGENT => 'SemaOPS/1.0',
         ]);
 
         $raw = curl_exec($ch);

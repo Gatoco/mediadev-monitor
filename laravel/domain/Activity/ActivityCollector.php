@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Activity: últimas publicaciones (solo sitios WP).
+ * SemaOPS — Activity: últimas publicaciones (solo sitios WP).
  *
  * Q#3 tokenless-first (AC-01..AC-09):
  *   - Primer intento SIEMPRE sin auth (público).

@@ -1,4 +1,4 @@
-# Mediadev Monitor — fixture-wp: imagen base para los 3 fixtures WordPress.
+# SemaOPS — fixture-wp: imagen base para los 3 fixtures WordPress.
 #
 # Base: imagen oficial WordPress + Apache + PHP 8.3.
 # El comportamiento del fixture se elige en runtime con la variable FIXTURE_TYPE:

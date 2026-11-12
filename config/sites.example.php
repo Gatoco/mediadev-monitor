@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — registro de sitios (plantilla).
+ * SemaOPS — registro de sitios (plantilla).
  *
  * Copia este archivo a config/sites.php y completa con los sitios reales.
  * config/sites.php está en .gitignore — NUNCA subir tokens al repositorio.

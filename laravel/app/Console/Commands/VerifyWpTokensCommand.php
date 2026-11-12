@@ -100,7 +100,7 @@ class VerifyWpTokensCommand extends Command
 
         $email = new EmailChannel(recipients: config('notifications.emails'));
         if ($email->enabled()) {
-            $email->send('[mediadev] AP WP inválido: ' . $site->name, $text);
+            $email->send('[semaops] AP WP inválido: ' . $site->name, $text);
         }
     }
 }

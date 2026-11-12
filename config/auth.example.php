@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — autenticación del dashboard (plantilla).
+ * SemaOPS — autenticación del dashboard (plantilla).
  *
  * Copia este archivo a config/auth.php y define usuario + hash de contraseña.
  * config/auth.php está en .gitignore — NUNCA subir hashes al repositorio.

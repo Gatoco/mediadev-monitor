@@ -12,7 +12,7 @@ final class WatchdogMessages
 {
     public static function subject(string $emoji, string $kind, string $siteName): string
     {
-        return "[mediadev] {$emoji} {$kind}: {$siteName}";
+        return "[semaops] {$emoji} {$kind}: {$siteName}";
     }
 
     public static function siteDown(string $siteName, string $url, int $failures): string
@@ -72,7 +72,7 @@ final class WatchdogMessages
     public static function digest(array $stats): string
     {
         $lines = [
-            '📊 RESUMEN 24h — Mediadev Monitor',
+            '📊 RESUMEN 24h — SemaOPS',
             "Ventana: {$stats['from']} → {$stats['to']}",
             "Sitios: {$stats['total']} · Checks: {$stats['chks']} · Fallidos: {$stats['failures']}",
         ];

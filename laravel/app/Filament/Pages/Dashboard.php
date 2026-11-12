@@ -18,7 +18,7 @@ class Dashboard extends BaseDashboard
 
     public function getHeading(): string
     {
-        return 'Mediadev Monitor';
+        return 'SemaOPS';
     }
 
     public function getSubheading(): ?string

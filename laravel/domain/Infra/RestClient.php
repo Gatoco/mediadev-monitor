@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Infra: Cliente REST (wrapper curl, cero dependencias).
+ * SemaOPS — Infra: Cliente REST (wrapper curl, cero dependencias).
  *
  * - Basic Auth para Application Passwords de WordPress
  * - Timeout por request
@@ -62,7 +62,7 @@ final class RestClient
             CURLOPT_CONNECTTIMEOUT_MS => self::TIMEOUT_MS,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 3,
-            CURLOPT_USERAGENT => 'MediadevMonitor/0.1 (+https://github.com/Gatoco/mediadev-monitor)',
+            CURLOPT_USERAGENT => 'SemaOPS/0.1 (+https://github.com/Gatoco/mediadev-monitor)',
         ]);
 
         if ($basicAuth !== null) {

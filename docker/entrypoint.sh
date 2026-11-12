@@ -1,5 +1,5 @@
 #!/bin/sh
-# Mediadev Monitor — entrypoint del contenedor.
+# SemaOPS — entrypoint del contenedor.
 # 1. Forzar DB_DATABASE en .env (misma DB para web, cron y tinker).
 # 2. Migraciones idempotentes (la DB vive en el volumen mediadev-data).
 # 3. Cron en foreground (scheduler: uptime 5min / deep 6h).
@@ -26,7 +26,7 @@ php artisan migrate --force
 # Cron NO hereda las env de compose (PATH mínimo). Con DB_DATABASE ya en
 # .env, schedule:run usa la misma DB que el web — solo falta php absoluto.
 cat > /etc/cron.d/mediadev <<EOF
-# Mediadev Monitor — cron (generado por entrypoint con env del runtime)
+# SemaOPS — cron (generado por entrypoint con env del runtime)
 * * * * * cd /app/laravel && /usr/local/bin/php artisan schedule:run >> /var/log/mediadev-scheduler.log 2>&1
 EOF
 chmod 0644 /etc/cron.d/mediadev

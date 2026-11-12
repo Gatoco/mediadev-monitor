@@ -1,6 +1,6 @@
 ---
 name: Reporte de error
-about: Informa un comportamiento incorrecto de MediaDev Monitor
+about: Informa un comportamiento incorrecto de SemaOPS
 title: "[BUG] "
 labels: bug
 assignees: ""

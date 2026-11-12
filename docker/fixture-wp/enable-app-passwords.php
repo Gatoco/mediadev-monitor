@@ -1,6 +1,6 @@
 <?php
 /**
- * Mediadev Monitor — MU-plugin: forzar soporte de Application Passwords en E2E.
+ * SemaOPS — MU-plugin: forzar soporte de Application Passwords en E2E.
  *
  * WP 5.6+ desactiva APs por defecto cuando el siteurl no es HTTPS. En el stack
  * E2E usamos HTTP interno (http://wp-full:80, etc.), así que forzamos el

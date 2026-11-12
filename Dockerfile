@@ -1,4 +1,4 @@
-# Mediadev Monitor — Dockerfile (Laravel 12 + Filament v4)
+# SemaOPS — Dockerfile (Laravel 12 + Filament v4)
 
 FROM php:8.3-cli
 

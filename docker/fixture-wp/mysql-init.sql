@@ -1,4 +1,4 @@
--- Mediadev Monitor — E2E: base de datos por fixture WordPress.
+-- SemaOPS — E2E: base de datos por fixture WordPress.
 -- Se monta en /docker-entrypoint-initdb.d/ del servicio mysql compartido.
 -- Cada fixture WP usa su propia base vía WORDPRESS_DB_NAME.
 --

@@ -1,4 +1,4 @@
-# Mediadev Monitor — cron
+# SemaOPS — cron
 # Una sola entrada: Laravel Scheduler decide la cadencia
 # (uptime cada 5 min, deep cada 6h — routes/console.php).
 # Nota: cron usa PATH mínimo (/usr/bin:/bin) — ruta absoluta a php.

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Mediadev Monitor — Version: versiones core/plugins/themes + updates pendientes.
+ * SemaOPS — Version: versiones core/plugins/themes + updates pendientes.
  *
  * Severidad: core desactualizado = red; plugins/temas = yellow; al día = green.
  * Última versión estable de WP: api.wordpress.org cacheado 24h + fallback hardcoded.

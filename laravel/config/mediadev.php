@@ -3,7 +3,7 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Mediadev Monitor — Legacy config bridge
+    | SemaOPS — Legacy config bridge
     |--------------------------------------------------------------------------
     |
     | The vanilla app reads sites and auth from repo-root config/*.php files

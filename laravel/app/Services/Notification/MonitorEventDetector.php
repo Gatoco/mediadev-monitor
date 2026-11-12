@@ -342,8 +342,8 @@ class MonitorEventDetector
                 $event['severity'] ?? 'green',
                 $event['php'] ?? null,
             ),
-            'info' => $event['text'] ?? 'Resumen mediadev',
-            default => 'Evento mediadev: ' . json_encode($event),
+            'info' => $event['text'] ?? 'Resumen SemaOPS',
+            default => 'Evento SemaOPS: ' . json_encode($event),
         };
     }
 }

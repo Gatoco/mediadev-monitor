@@ -2,7 +2,7 @@
 
 <img src="docs/assets/semaops-logo.svg" alt="SemaOPS" width="140" />
 
-# MediaDev Monitor
+# SemaOPS
 
 ### by SemaOPS
 
@@ -45,7 +45,7 @@ Semáforo de 4 estados sobre los 28 sitios del portafolio de MediaDev.CL:
 
 ### Zero-plugins
 
-MediaDev Monitor no instala nada en los sitios monitoreados. Usa mecanismos nativos de WordPress:
+SemaOPS no instala nada en los sitios monitoreados. Usa mecanismos nativos de WordPress:
 
 - **Application Passwords** (WP 5.6+): un token por sitio, generado desde *Usuarios → Perfil*.
 - **REST API nativa** (`/wp-json`): versiones de core, plugins, temas, Site Health y actividad reciente.
@@ -247,7 +247,7 @@ Suite de tests: `cd laravel && php artisan test`.
 | **Benjamín Cifuentes** | Cofundador |
 | **Benjamín Contesso** | Cofundador |
 
-SemaOPS nace en **INACAP Sede Talca**. MediaDev Monitor se desarrolla para el cliente **MediaDev.CL**, agencia de diseño web en Talca, Chile.
+SemaOPS nace en **INACAP Sede Talca**. SemaOPS se desarrolla para el cliente **MediaDev.CL**, agencia de diseño web en Talca, Chile.
 
 Web: [semaops.cl](https://semaops.cl)
 
@@ -263,7 +263,7 @@ Proyecto académico de la asignatura **Innovación y Emprendimiento III (FGIE03)
 | Ficha de planificación del testeo | 3.1.2.3 |
 | Matriz CDM con propuesta de valor | 3.1.2.4 |
 | Matriz PESTAL profundizada | 3.1.4.1 |
-| Business Model Canvas V2 (MediaDev Monitor) | Recurso 3.4 |
+| Business Model Canvas V2 (SemaOPS) | Recurso 3.4 |
 
 ### Alineación con los ODS
 

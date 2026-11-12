@@ -1,4 +1,4 @@
-# Mediadev Monitor — portfolio-emulator: 28 sitios reales, 1 contenedor.
+# SemaOPS — portfolio-emulator: 28 sitios reales, 1 contenedor.
 #
 # Emula los sitios del portafolio de MediaDev (verificado contra mediadev.cl,
 # 2026-08-24) respondiendo según el Host header. El monitor los consulta por

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Mediadev Monitor — wp-cli oneshot: crea usuario + Application Password.
+# SemaOPS — wp-cli oneshot: crea usuario + Application Password.
 #
 # Se ejecuta dentro de un contenedor `wordpress:cli` (mediadev-wp-cli-<fixture>).
 # Es idempotente: re-ejecutar no falla y no crea duplicados.
@@ -48,7 +48,7 @@ if ! wp core is-installed 2>/dev/null; then
     echo "  WP no instalado — ejecutando wp core install..." >&2
     wp core install \
         --url="${WP_URL}" \
-        --title="Mediadev Monitor E2E (${FIXTURE_NAME})" \
+        --title="SemaOPS E2E (${FIXTURE_NAME})" \
         --admin_user="admin" \
         --admin_password="adminpass" \
         --admin_email="admin@example.com" >&2
