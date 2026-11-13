@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
-use App\Models\UptimeCheck;
 use App\Support\Uptime\UptimeHistory;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Página pública de estado en tiempo real.
@@ -50,19 +50,26 @@ class StatusController
             ->orderBy('name')
             ->get();
 
-        // Todos los checks de la última semana en 2 queries (1 por tabla… en
-        // realidad una sola: uptime_checks), indexados por site_id.
-        $checksBySite = UptimeCheck::query()
-            ->where('ts', '>=', $now->subDays(7))
+        // La tabla crece sin tope (cron cada minuto): nunca hidratar 7 días de filas.
+        // 24 h en crudo (sparkline + uptime 24 h) y 7 d como agregado SQL por sitio.
+        $last24BySite = DB::table('uptime_checks')
+            ->select(['site_id', 'ts', 'status', 'response_ms'])
+            ->where('ts', '>=', $now->subDay())
             ->orderBy('ts')
             ->get()
             ->groupBy('site_id');
 
-        return $sites->map(function (Site $site) use ($checksBySite, $now) {
-            $checks = $checksBySite->get($site->id, collect());
+        $week = DB::table('uptime_checks')
+            ->selectRaw('site_id, COUNT(*) AS total, SUM(CASE WHEN status >= 200 AND status < 400 THEN 1 ELSE 0 END) AS up')
+            ->where('ts', '>=', $now->subDays(7))
+            ->groupBy('site_id')
+            ->get()
+            ->keyBy('site_id');
 
-            $last24 = $checks->filter(fn ($c) => $c->ts >= $now->subDay());
-            $spark = UptimeHistory::sparkline($checks, 24, $now);
+        return $sites->map(function (Site $site) use ($last24BySite, $week, $now) {
+            $last24 = $last24BySite->get($site->id, collect());
+            $spark = UptimeHistory::sparkline($last24, 24, $now);
+            $w = $week->get($site->id);
 
             $state = $site->current_state instanceof \Domain\SiteRegistry\SiteState
                 ? $site->current_state->value
@@ -80,7 +87,7 @@ class StatusController
                 'failures' => $site->consecutive_failures,
                 'core_version' => $site->latestVersion?->core_version,
                 'uptime_24h' => UptimeHistory::percentage($last24),
-                'uptime_7d' => UptimeHistory::percentage($checks),
+                'uptime_7d' => $w && $w->total > 0 ? round($w->up / $w->total * 100, 1) : null,
                 'sparkline' => array_map(
                     fn (array $b) => ['up' => $b['up'], 'total' => $b['total'], 'avg_ms' => $b['avg_ms']],
                     $spark,
