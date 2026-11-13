@@ -111,7 +111,7 @@ wait_monitor_ready() {
     log "Esperando a que el monitor esté listo (migraciones)..."
     local deadline=$(( $(date +%s) + 90 ))
     while [ "$(date +%s)" -lt "$deadline" ]; do
-        if $DC exec -T monitor sh -c "curl -s -o /dev/null http://localhost:8080/admin/login" 2>/dev/null; then
+        if $DC exec -T monitor sh -c "curl -s -o /dev/null http://localhost:8080/status.json" 2>/dev/null; then
             ok "monitor listo (migraciones aplicadas)"
             return 0
         fi

@@ -3,7 +3,7 @@
 # 1. Forzar DB_DATABASE en .env (misma DB para web, cron y tinker).
 # 2. Migraciones idempotentes (la DB vive en el volumen mediadev-data).
 # 3. Cron en foreground (scheduler: uptime 5min / deep 6h).
-# 4. Servidor del panel Filament.
+# 4. Servidor del panel.
 
 set -e
 
@@ -39,4 +39,6 @@ CRON_PID=$!
 # Señal limpia para cron al terminar.
 trap 'kill $CRON_PID 2>/dev/null || true' INT TERM EXIT
 
+# ponytail: servidor embebido de PHP; 4 workers para que kiosko + otros equipos no se bloqueen entre sí.
+export PHP_CLI_SERVER_WORKERS=4
 exec php artisan serve --host=0.0.0.0 --port=8080

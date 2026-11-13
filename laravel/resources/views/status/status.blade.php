@@ -65,8 +65,6 @@
         .telemetry[data-mode="offline"] .dot { background: var(--down); }
         .telemetry[data-mode="sim"] .dot { background: var(--text); }
         .clock { color: var(--text); font-family: var(--mono); font-size: 13px; }
-        .admin-link { color: var(--text-2); text-decoration: none; padding: 6px 12px; border: 1px solid var(--line-strong); border-radius: 8px; transition: color .15s var(--ease), border-color .15s var(--ease); }
-        .admin-link:hover { color: var(--text); border-color: var(--text-2); }
 
         /* Hero band: semaphore + message + quiet KPIs */
         .hero { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 32px; align-items: center; flex: none; }
@@ -217,7 +215,6 @@
                 <span class="dot" aria-hidden="true"></span><span id="telemetry-text">Telemetría real</span>
             </span>
             <time class="clock" id="clock">--:--:--</time>
-            <a class="admin-link" href="/admin">Panel de administración</a>
         </div>
     </header>
 

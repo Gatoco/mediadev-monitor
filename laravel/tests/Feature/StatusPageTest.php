@@ -37,7 +37,7 @@ class StatusPageTest extends TestCase
             ]);
         }
 
-        $response = $this->get('/status');
+        $response = $this->get('/');
 
         $response->assertStatus(200)
             ->assertSee('Demo')
@@ -99,10 +99,5 @@ class StatusPageTest extends TestCase
         $entry = collect($response->json('sites'))->firstWhere('name', 'Nuevo');
         $this->assertNull($entry['uptime_24h']);
         $this->assertNull($entry['uptime_7d']);
-    }
-
-    public function test_root_redirects_to_status(): void
-    {
-        $this->get('/')->assertRedirect('/status');
     }
 }

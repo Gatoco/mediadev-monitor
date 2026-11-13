@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mediadev-feria — levanta el stack y abre SemaOPS Mission Control (/live) en pantalla completa.
+# mediadev-feria — levanta el stack y abre SemaOPS Mission Control (/) en pantalla completa.
 #   mediadev-feria            construye/levanta y abre el kiosko
 #   mediadev-feria --no-build usa la imagen existente (más rápido)
 #   mediadev-feria --share    además publica el panel en la IP Tailscale (para verlo desde otro equipo)
@@ -7,12 +7,12 @@
 #   mediadev-feria --remote   sólo abre el kiosko apuntando al monitor de otro equipo (FERIA_HOST, por defecto el T420)
 set -euo pipefail
 ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
-URL="${FERIA_URL:-http://127.0.0.1:8080/live}"
+URL="${FERIA_URL:-http://127.0.0.1:8080/}"
 cd "$ROOT"
 COMPOSE=(docker compose)
 
 case "${1:-}" in
-  --remote) URL="${FERIA_URL:-http://${FERIA_HOST:-100.66.97.18}:8080/live}" ;;
+  --remote) URL="${FERIA_URL:-http://${FERIA_HOST:-100.66.97.18}:8080/}" ;;
   --stop) docker compose stop monitor; exit 0 ;;
   --share)
     export TS_IP="$(tailscale ip -4 | head -1)"

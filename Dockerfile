@@ -1,20 +1,15 @@
-# SemaOPS — Dockerfile (Laravel 12 + Filament v4)
+# SemaOPS — Dockerfile (Laravel 12)
 
 FROM php:8.3-cli
 
-# Extensiones necesarias: pdo_sqlite para Eloquent, intl para Filament v4
-# (paginación usa Number::format — sin intl el panel lanza excepción) y zip
-# para openspout (dependencia de Filament export/import — composer install
-# falla sin ext-zip).
+# Extensiones necesarias: pdo_sqlite para Eloquent.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         cron \
         curl \
         unzip \
-        libicu-dev \
-        libzip-dev \
         libsqlite3-dev \
         pkg-config \
-    && docker-php-ext-install intl pdo pdo_sqlite zip \
+    && docker-php-ext-install pdo pdo_sqlite \
     && rm -rf /var/lib/apt/lists/*
 
 # Composer
@@ -33,8 +28,7 @@ COPY docker/fixture-wp/wp-latest-version.cache.json /app/laravel/wp-latest-versi
 # .env mínimo para el build (key:generate + cache de config)
 COPY laravel/.env.example /app/laravel/.env
 
-# Instalar dependencias, generar APP_KEY y publicar assets de Filament
-# (sin filament:assets el panel sirve CSS/JS 404 → login no funciona).
+# Instalar dependencias y generar APP_KEY.
 # Composer: timeout alto; --prefer-dist para paquetes zip (más rápido y
 # menos frágil detrás de NAT); network=host en el build porque la bridge
 # por defecto de este host no tiene salida a internet durante el build.
@@ -43,8 +37,7 @@ ENV COMPOSER_PROCESS_TIMEOUT=1200 \
 
 RUN composer install --no-dev --no-interaction --optimize-autoloader \
         --prefer-dist \
-    && php artisan key:generate \
-    && php artisan filament:assets
+    && php artisan key:generate
 
 # Scheduler: una sola línea en /etc/cron.d → schedule:run (uptime 5min, deep 6h)
 COPY crontab /etc/cron.d/mediadev
@@ -55,6 +48,6 @@ RUN chmod 0644 /etc/cron.d/mediadev \
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Panel Filament
+# Panel web
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

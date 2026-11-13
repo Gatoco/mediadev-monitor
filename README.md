@@ -10,7 +10,6 @@
 
 [![PHP](https://img.shields.io/badge/PHP-8.3-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?style=flat-square&logo=laravel&logoColor=white)](https://laravel.com/)
-[![Filament](https://img.shields.io/badge/Filament-v4-F59E0B?style=flat-square)](https://filamentphp.com/)
 [![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
 [![SQLite](https://img.shields.io/badge/SQLite-embebido-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![ODS 8](https://img.shields.io/badge/ODS%208-Trabajo%20Decente-A21942?style=flat-square)](https://www.un.org/sustainabledevelopment/es/economic-growth/)
@@ -57,9 +56,7 @@ SemaOPS no instala nada en los sitios monitoreados. Usa mecanismos nativos de Wo
 - **Versiones y updates pendientes**: core (rojo), plugins y temas (amarillo).
 - **Site Health y actividad reciente**: métricas vía REST con Application Passwords.
 - **Notificaciones**: agente de eventos (caída, recuperación, nueva versión) con resumen horario por Telegram y correo.
-- **Dashboard Filament** (`/admin`): panel con semáforo unificado, widgets y gestión de sitios.
-- **Mission Control** (`/status`, kiosko en `/live`): matriz de salud de los 28 sitios, semáforo global y demo interactiva de caída con diagnóstico asistido (simulación local, no toca datos reales). JSON en `/status.json`.
-- **Página pública** (`/demo`): resumen de la cartera sin login. JSON en `/demo.json`.
+- **Mission Control** (`/`): una sola interfaz para feria y kiosko (F11). Matriz de salud de los 28 sitios, semáforo global y demo interactiva de caída con diagnóstico asistido (simulación local, no toca datos reales). Feed JSON en `/status.json`.
 - **CLI**: `php artisan monitor:check all`, con exit codes `0` / `1` / `2`.
 
 ### Arquitectura
@@ -81,8 +78,7 @@ SemaOPS no instala nada en los sitios monitoreados. Usa mecanismos nativos de Wo
                           ▼
  Eloquent (sites, uptime_checks, version_snapshots, site_health_snapshots, activity_snapshots)
                           │
-                          ├──▶ Filament panel /admin (SiteResource + widgets)
-                          ├──▶ Mission Control /status · /demo
+                          ├──▶ Mission Control / · /status.json
                           └──▶ artisan CLI (reporte terminal + exit code)
 ```
 
@@ -92,9 +88,9 @@ El dominio (`laravel/domain/`) está aislado del framework: clases PHP puras con
 
 | Componente | Tecnología |
 |:--|:--|
-| Framework | Laravel 12 + Filament v4 (PHP 8.3) |
+| Framework | Laravel 12 (PHP 8.3), sin framework de UI |
 | Base de datos | SQLite embebido, Eloquent ORM |
-| Dashboard | Panel admin Filament (login, `SiteResource`, widgets) |
+| Interfaz | Blade + CSS/JS nativo (una sola vista) |
 | CLI | Comandos Artisan con exit codes 0/1/2 |
 | Despliegue | Docker + docker compose + Laravel Scheduler |
 
@@ -110,21 +106,11 @@ Requisitos: Docker con el plugin `compose`.
 docker compose up -d
 ```
 
-**2. Crear el usuario administrador**
+**2. Abrir el panel**
 
-```bash
-docker compose exec monitor php artisan tinker
-# Dentro de tinker (la contraseña se hashea automáticamente):
-# App\Models\User::create(['name' => 'Admin', 'email' => 'tu@correo.cl', 'password' => 'cambia-esta-clave']);
-```
+- Mission Control: <http://localhost:8080/> (F11 para kiosko). Atajo de feria: `bin/mediadev-feria` (`--share` lo publica en Tailscale, `--remote` abre el de otro equipo, `--no-build`, `--stop`)
 
-**3. Abrir el panel**
-
-- Dashboard: <http://localhost:8080/admin>
-- Mission Control: <http://localhost:8080/status> (kiosko: <http://localhost:8080/live>). Atajo de feria: `bin/mediadev-feria` (`--share` lo publica en Tailscale, `--remote` abre el de otro equipo, `--no-build`, `--stop`)
-- Página pública: <http://localhost:8080/demo>
-
-**4. (Opcional) Emulador de portafolio**
+**3. (Opcional) Emulador de portafolio**
 
 Levanta los 28 sitios de prueba del portafolio MediaDev.CL en una red Docker aislada, sin tocar sitios reales:
 
@@ -155,7 +141,7 @@ cp ../config/sites.example.php ../config/sites.php
 
 php artisan collector:uptime
 php artisan collector:deep
-php artisan serve             # http://localhost:8000/admin
+php artisan serve             # http://localhost:8000/
 ```
 
 ## Uso
@@ -279,10 +265,10 @@ Proyecto académico de la asignatura **Innovación y Emprendimiento III (FGIE03)
 - [x] Análisis de cliente (28 sitios de MediaDev verificados)
 - [x] Propuesta y especificaciones
 - [x] Diseño técnico
-- [x] Migración a Laravel 12 + Filament v4
+- [x] Migración a Laravel 12
 - [x] Fase 1: infraestructura (SQLite, cliente REST, configuración)
 - [x] Fase 2: collectors (uptime, versiones, salud, actividad)
-- [x] Fase 3: interfaces (CLI Artisan, dashboard Filament)
+- [x] Fase 3: interfaces (CLI Artisan, Mission Control)
 - [x] Fase 4: Docker y verificación E2E
 - [x] Fase 5: tests y documentación
 - [x] Alertas por Telegram y correo

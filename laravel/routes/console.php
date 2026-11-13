@@ -4,13 +4,7 @@ use App\Console\Commands\CollectorDeepCommand;
 use App\Console\Commands\CollectorUptimeCommand;
 use App\Console\Commands\NotifyStatusCommand;
 use App\Console\Commands\VerifyWpTokensCommand;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
 
 // Reemplaza el crontab vanilla (uptime cada 5 min, deep cada 6 h).
 // Con una sola línea cron el contenedor corre schedule:run.
