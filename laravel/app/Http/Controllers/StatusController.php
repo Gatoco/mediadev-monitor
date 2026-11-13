@@ -38,7 +38,7 @@ class StatusController
      *     id: int, name: string, url: string, state: string,
      *     state_label: string, last_ms: ?int, last_status: ?int,
      *     last_check: ?string, failures: int,
-     *     uptime_24h: ?float, uptime_7d: ?float, sparkline: array<int, array{up: int, total: int}>,
+     *     uptime_24h: ?float, uptime_7d: ?float, core_version: ?string, sparkline: array<int, array{up: int, total: int, avg_ms: ?int}>,
      * }>
      */
     private function siteData(): array
@@ -46,7 +46,7 @@ class StatusController
         $now = CarbonImmutable::now();
 
         $sites = Site::query()
-            ->with(['latestUptime'])
+            ->with(['latestUptime', 'latestVersion'])
             ->orderBy('name')
             ->get();
 
@@ -78,10 +78,11 @@ class StatusController
                 'last_status' => $site->latestUptime?->status,
                 'last_check' => $site->latestUptime?->ts?->toIso8601String(),
                 'failures' => $site->consecutive_failures,
+                'core_version' => $site->latestVersion?->core_version,
                 'uptime_24h' => UptimeHistory::percentage($last24),
                 'uptime_7d' => UptimeHistory::percentage($checks),
                 'sparkline' => array_map(
-                    fn (array $b) => ['up' => $b['up'], 'total' => $b['total']],
+                    fn (array $b) => ['up' => $b['up'], 'total' => $b['total'], 'avg_ms' => $b['avg_ms']],
                     $spark,
                 ),
             ];
