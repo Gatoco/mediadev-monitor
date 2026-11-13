@@ -58,7 +58,8 @@ SemaOPS no instala nada en los sitios monitoreados. Usa mecanismos nativos de Wo
 - **Site Health y actividad reciente**: métricas vía REST con Application Passwords.
 - **Notificaciones**: agente de eventos (caída, recuperación, nueva versión) con resumen horario por Telegram y correo.
 - **Dashboard Filament** (`/admin`): panel con semáforo unificado, widgets y gestión de sitios.
-- **Página pública** (`/demo`): estado de la cartera sin login. Datos en JSON en `/status.json`.
+- **Mission Control** (`/status`, kiosko en `/live`): matriz de salud de los 28 sitios, semáforo global y demo interactiva de caída con diagnóstico asistido (simulación local, no toca datos reales). JSON en `/status.json`.
+- **Página pública** (`/demo`): resumen de la cartera sin login. JSON en `/demo.json`.
 - **CLI**: `php artisan monitor:check all`, con exit codes `0` / `1` / `2`.
 
 ### Arquitectura
@@ -81,7 +82,7 @@ SemaOPS no instala nada en los sitios monitoreados. Usa mecanismos nativos de Wo
  Eloquent (sites, uptime_checks, version_snapshots, site_health_snapshots, activity_snapshots)
                           │
                           ├──▶ Filament panel /admin (SiteResource + widgets)
-                          ├──▶ Página pública /demo y /status.json
+                          ├──▶ Mission Control /status · /demo
                           └──▶ artisan CLI (reporte terminal + exit code)
 ```
 
@@ -120,6 +121,7 @@ docker compose exec monitor php artisan tinker
 **3. Abrir el panel**
 
 - Dashboard: <http://localhost:8080/admin>
+- Mission Control: <http://localhost:8080/status> (kiosko: <http://localhost:8080/live>)
 - Página pública: <http://localhost:8080/demo>
 
 **4. (Opcional) Emulador de portafolio**
