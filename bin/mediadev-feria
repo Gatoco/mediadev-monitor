@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# mediadev-feria — levanta el stack y abre SemaOPS Mission Control (/live) en pantalla completa.
+#   mediadev-feria            construye/levanta y abre el kiosko
+#   mediadev-feria --no-build usa la imagen existente (más rápido)
+#   mediadev-feria --stop     detiene el monitor
+set -euo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+URL="${FERIA_URL:-http://127.0.0.1:8080/live}"
+cd "$ROOT"
+
+case "${1:-}" in
+  --stop) docker compose stop monitor; exit 0 ;;
+  --no-build) docker compose up -d monitor ;;
+  *)
+    # compose build no puede pasar --allow; el Dockerfile usa network: host (ver docker-compose.yml)
+    docker compose build --print monitor | docker buildx bake --allow=network.host -f - --load monitor
+    docker compose up -d monitor ;;
+esac
+
+printf 'Esperando %s ' "$URL"
+for _ in $(seq 1 60); do
+  curl -fs -o /dev/null "$URL" && break
+  printf '.'; sleep 2
+done
+curl -fs -o /dev/null "$URL" || { echo; echo "El panel no respondió en 2 min: docker compose logs monitor" >&2; exit 1; }
+echo ' listo'
+
+for b in chromium chromium-browser google-chrome-stable brave firefox; do
+  command -v "$b" >/dev/null || continue
+  case "$b" in
+    firefox) exec firefox --kiosk "$URL" ;;
+    *) exec "$b" --kiosk --noerrdialogs --disable-infobars --user-data-dir="${TMPDIR:-/tmp}/mediadev-feria-profile" "$URL" ;;
+  esac
+done
+echo "Sin navegador compatible; abre $URL" >&2

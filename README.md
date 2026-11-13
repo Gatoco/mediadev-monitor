@@ -121,7 +121,7 @@ docker compose exec monitor php artisan tinker
 **3. Abrir el panel**
 
 - Dashboard: <http://localhost:8080/admin>
-- Mission Control: <http://localhost:8080/status> (kiosko: <http://localhost:8080/live>)
+- Mission Control: <http://localhost:8080/status> (kiosko: <http://localhost:8080/live>). Atajo de feria: `bin/mediadev-feria` (ver `--stop`, `--no-build`)
 - Página pública: <http://localhost:8080/demo>
 
 **4. (Opcional) Emulador de portafolio**
