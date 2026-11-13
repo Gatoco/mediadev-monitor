@@ -78,6 +78,11 @@ class FilamentDashboardTest extends TestCase
         $this->actingAsAdmin();
         $this->seedSites(3);
 
-        $this->get('/admin')->assertStatus(200);
+        $response = $this->get('/admin');
+        $response->assertStatus(200);
+
+        // El topbar debe enlazar al panel público (/status), que vive fuera de /admin.
+        $response->assertSee('Estado en vivo');
+        $response->assertSee('/status', false);
     }
 }

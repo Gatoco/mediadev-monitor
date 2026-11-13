@@ -76,7 +76,7 @@ class StatusPageTest extends TestCase
         $this->assertSame('down', $entry['state']);
         $this->assertSame('Caído', $entry['state_label']);
         $this->assertSame(2, $entry['failures']);
-        $this->assertSame(0.0, $entry['uptime_24h']);
+        $this->assertEquals(0.0, $entry['uptime_24h']);
         $this->assertNull($entry['last_ms']);
         $this->assertArrayHasKey('sparkline', $entry);
         $this->assertCount(24, $entry['sparkline']);

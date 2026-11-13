@@ -18,7 +18,7 @@ class FleetResponseChart extends ChartWidget
 
     protected int | string | array $columnSpan = 'half';
 
-    protected ?string $color = 'warning';
+    protected string $color = 'warning';
 
     protected ?array $options = [
         'plugins' => ['legend' => ['display' => false]],

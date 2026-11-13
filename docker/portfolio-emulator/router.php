@@ -98,8 +98,8 @@ if ($profile['nonwp'] ?? false) {
     exit;
 }
 
-// Sitios "down" (hotelvivomontana, septimaruta) NO pasan por acá:
-// son contenedores sin listener (ver docker-compose.yml).
+// Sitios "down" (hotelvivomontana) NO pasan por acá:
+// es un contenedor sin listener (ver docker-compose.yml).
 
 // --- / : home con meta generator (o sin él si el sitio oculta la versión)
 if ($path === '/') {

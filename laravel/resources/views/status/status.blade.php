@@ -22,6 +22,13 @@
         h1 { font-size: 1.4rem; }
         h1 span { color: var(--accent); }
         .live { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .85rem; }
+        .head-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .admin-link {
+            color: var(--muted); font-size: .8rem; text-decoration: none;
+            border: 1px solid var(--border); border-radius: 999px; padding: 5px 13px;
+            transition: color .2s, border-color .2s;
+        }
+        .admin-link:hover { color: var(--accent); border-color: var(--accent); }
         .live .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); animation: pulse 2s infinite; }
         .live.stale .dot { background: var(--danger); animation: none; }
         @keyframes pulse { 50% { opacity: .3; } }
@@ -63,7 +70,10 @@
 <body>
     <header>
         <h1>MediaDev <span>Monitor</span> — Estado en vivo</h1>
-        <div class="live" id="live"><span class="dot"></span><span id="live-text">en vivo</span></div>
+        <div class="head-right">
+            <div class="live" id="live"><span class="dot"></span><span id="live-text">en vivo</span></div>
+            <a class="admin-link" href="/admin">Panel de administración</a>
+        </div>
     </header>
 
     <div class="summary" id="summary">

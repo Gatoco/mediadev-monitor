@@ -15,7 +15,7 @@ use Illuminate\Http\JsonResponse;
  * Renderiza la primera vez y sirve JSON para el polling (fetch cada 5s),
  * así el navegador no re-descarga HTML+assets en cada ciclo.
  */
-class StatusController extends Controller
+class StatusController
 {
     public function index(): View
     {

@@ -231,6 +231,7 @@ services:
           - villalegre.cl
           - vinadetoroalexander.cl
           - mediadev.cl
+          - septimaruta.cl
 
   portfolio-down:
     image: mediadev/down
@@ -241,7 +242,6 @@ services:
       net-sites:
         aliases:
           - hotelvivomontana.cl
-          - septimaruta.cl
 
   # --- wp-cli oneshots (crean usuario monitor + AP en cada fixture WP) ---
   # Escriben el token en /ap-tokens/<FIXTURE_NAME>.token (volumen compartido D6).

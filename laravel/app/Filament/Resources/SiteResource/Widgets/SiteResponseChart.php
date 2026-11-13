@@ -16,7 +16,7 @@ class SiteResponseChart extends ChartWidget
 
     protected ?string $heading = 'Tiempo de respuesta (24h)';
 
-    protected ?string $color = 'warning';
+    protected string $color = 'warning';
 
     protected ?array $options = [
         'plugins' => ['legend' => ['display' => false]],

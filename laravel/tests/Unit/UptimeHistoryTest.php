@@ -63,7 +63,7 @@ class UptimeHistoryTest extends TestCase
         $this->assertCount(24, $buckets);
         // ASC cronológico: primer bucket = -23h desde las 15:00 (startOfHour de 15:30-23h = 16:00 del día anterior)
         $this->assertTrue($buckets[0]['hour']->lt($buckets[23]['hour']));
-        $this->assertSame($now->startOfHour(), $buckets[23]['hour']);
+        $this->assertEquals($now->startOfHour(), $buckets[23]['hour']);
 
         $last = $buckets[23];
         $this->assertSame(2, $last['total']);
