@@ -1,0 +1,6 @@
+# Publica el panel (8080) también en la IP Tailscale de este equipo, para verlo desde otro equipo del tailnet:
+#   TS_IP=$(tailscale ip -4 | head -1) docker compose -f docker-compose.yml -f docker-compose.tailscale.yml up -d monitor
+services:
+  monitor:
+    ports:
+      - "${TS_IP:?exporta TS_IP}:8080:8080"
