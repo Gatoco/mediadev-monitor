@@ -37,7 +37,7 @@ for b in chromium chromium-browser google-chrome-stable brave firefox; do
   command -v "$b" >/dev/null || continue
   case "$b" in
     firefox) exec firefox --kiosk "$URL" ;;
-    *) exec "$b" --kiosk --noerrdialogs --disable-infobars --user-data-dir="${TMPDIR:-/tmp}/mediadev-feria-profile" "$URL" ;;
+    *) exec "$b" --kiosk --ozone-platform-hint=auto --noerrdialogs --disable-infobars --user-data-dir="${TMPDIR:-/tmp}/mediadev-feria-profile" "$URL" ;;
   esac
 done
 echo "Sin navegador compatible; abre $URL" >&2
