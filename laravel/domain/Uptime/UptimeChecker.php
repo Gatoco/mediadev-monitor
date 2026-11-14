@@ -22,9 +22,10 @@ final class UptimeResult
     ) {
     }
 
+    /** Éxito = respuesta HTTP 2xx/3xx. 0 (sin respuesta) y 4xx/5xx cuentan como fallo. */
     public function succeeded(): bool
     {
-        return $this->status !== 0;
+        return $this->status >= 200 && $this->status < 400;
     }
 }
 
@@ -53,17 +54,25 @@ final class UptimeChecker
         );
     }
 
-    /** Aplica el umbral 3-strikes y persiste el check. Devuelve el estado resultante. */
+    /** Fallos consecutivos tras este resultado (se reinicia con un éxito). */
+    public function failuresAfter(Site $site, UptimeResult $result): int
+    {
+        return $result->succeeded() ? 0 : $site->consecutiveFailures + 1;
+    }
+
+    /**
+     * Aplica el umbral 3-strikes y persiste el check. Devuelve el estado resultante.
+     *
+     * - Fallo: pasa a DOWN al llegar al umbral; antes conserva el estado actual.
+     * - Éxito: si venía DOWN vuelve a UNKNOWN (el deep re-clasifica);
+     *   si no, conserva la clasificación del deep (wp-full, non-wp, ...).
+     */
     public function applyThreshold(Site $site, UptimeResult $result): SiteState
     {
-        $failures = $result->succeeded() ? 0 : $site->consecutiveFailures + 1;
-        $state = $result->succeeded()
-            ? SiteState::UNKNOWN // el estado real lo define Degradation en deep; uptime solo marca down
-            : ($failures >= self::THRESHOLD ? SiteState::DOWN : $site->state);
-
-        // Si está down por uptime y se recupera, volver a unknown (Degradation re-clasifica en deep)
-        if ($result->succeeded() && $site->state === SiteState::DOWN) {
-            $state = SiteState::UNKNOWN;
+        if ($result->succeeded()) {
+            $state = $site->state === SiteState::DOWN ? SiteState::UNKNOWN : $site->state;
+        } else {
+            $state = $this->failuresAfter($site, $result) >= self::THRESHOLD ? SiteState::DOWN : $site->state;
         }
 
         $this->uptimeRepo->save($site->id, $result);

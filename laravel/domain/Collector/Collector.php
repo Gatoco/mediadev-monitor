@@ -70,6 +70,7 @@ final class Collector
             $checker = new UptimeChecker($this->client, $this->uptimeRepo);
             $result = $checker->check($site);
             $state = $checker->applyThreshold($site, $result);
+            $this->registry->setState($site->id, $state, $checker->failuresAfter($site, $result));
             return new SiteReport($site, $state, ['uptime' => $result]);
         }
 

@@ -50,40 +50,36 @@ class MonitorEventDetector
                 : (SiteState::tryFrom((string) $site->current_state) ?? SiteState::UNKNOWN);
 
             // --- 1. Eventos de estado (down / recovered) ---
-            [$lastUptime, $prev] = $this->lastTwoUptimeChecks($site);
+            // Un episodio de caída = una alerta "down" al entrar y una "recovered"
+            // al salir. El registro 'down' en notification_states marca que el
+            // episodio ya se avisó; se borra al recuperarse.
+            $downNotice = NotificationState::query()
+                ->where('site_id', $site->id)
+                ->where('kind', 'down')
+                ->first();
 
-            $prevSucceeded = $prev !== null && $prev->status !== null && $prev->status !== 0 && $prev->status < 400;
-
-            if ($state === SiteState::DOWN && $prevSucceeded) {
-                $fingerprint = $lastUptime?->id !== null ? 'uc:' . $lastUptime->id : null;
-                if ($this->shouldNotify($site, 'down', $fingerprint)) {
-                    $events[] = [
-                        'kind' => 'down',
-                        'site' => $site->name,
-                        'url' => $site->url,
-                        'failures' => (int) $site->consecutive_failures,
-                    ];
-                    $this->markNotified($site, 'down', $fingerprint);
-                }
+            if ($state === SiteState::DOWN && $downNotice === null) {
+                $events[] = [
+                    'kind' => 'down',
+                    'site' => $site->name,
+                    'url' => $site->url,
+                    'failures' => (int) $site->consecutive_failures,
+                ];
+                $this->markNotified($site, 'down', $site->latestUptime?->id !== null ? 'uc:' . $site->latestUptime->id : null);
             }
 
-            if ($state !== SiteState::DOWN && $prev !== null && !$prevSucceeded) {
-                $fingerprint = $lastUptime?->id !== null ? 'uc:' . $lastUptime->id : null;
-                if ($this->shouldNotify($site, 'recovered', $fingerprint)) {
-                    $flaky = $prev->ts !== null
-                        && $prev->ts->greaterThanOrEqualTo(now()->subMinutes($this->recoveryWindowMinutes));
-
-                    $events[] = [
-                        'kind' => 'recovered',
-                        'site' => $site->name,
-                        'url' => $site->url,
-                        'flaky' => $flaky,
-                        'response_ms' => $site->latestUptime?->response_ms,
-                    ];
-                    $this->markNotified($site, 'recovered', $fingerprint);
-                    // Limpia el down guardado — la próxima caída volverá a notificar.
-                    $this->resetNotified($site, 'down');
-                }
+            if ($state !== SiteState::DOWN && $downNotice !== null) {
+                $downSince = $downNotice->notified_at;
+                $events[] = [
+                    'kind' => 'recovered',
+                    'site' => $site->name,
+                    'url' => $site->url,
+                    'flaky' => $downSince !== null
+                        && $downSince->greaterThanOrEqualTo(now()->subMinutes($this->recoveryWindowMinutes)),
+                    'down_minutes' => $downSince !== null ? (int) $downSince->diffInMinutes(now()) : null,
+                    'response_ms' => $site->latestUptime?->response_ms,
+                ];
+                $this->resetNotified($site, 'down');
             }
 
             // --- 2. Eventos de versión WP (core actualizado) ---
@@ -229,23 +225,6 @@ class MonitorEventDetector
     // --- Cache de snapshots ya notificados (dedupe de versiones) ---
 
     // --- Utilidades internas ---
-
-    /**
-     * Devuelve [último, segundo] uptime check del sitio.
-     *
-     * @return array{0:?UptimeCheck, 1:?UptimeCheck}
-     */
-    private function lastTwoUptimeChecks(Site $site): array
-    {
-        $rows = UptimeCheck::query()
-            ->where('site_id', $site->id)
-            ->orderByDesc('ts')
-            ->orderByDesc('id')
-            ->limit(2)
-            ->get();
-
-        return [$rows->get(0), $rows->get(1)];
-    }
 
     /**
      * ¿Toca notificar? Solo si nunca se reportó ESTA firma del evento.
