@@ -223,6 +223,26 @@ Validado de punta a punta: **12/12 checks PASS** (clasificación por fixture, 3-
 
 Suite de tests: `cd laravel && php artisan test`.
 
+## Chaos Lab (demo con sitios clonados)
+
+`/lab` es una app para **provocar fallas a propósito** en los sitios clonados y cronometrar la reacción del monitor: falla provocada → 3 chequeos fallidos → Caído detectado → alerta por Telegram/email → recuperado. Nunca apunta a sitios en producción.
+
+```bash
+export CHAOS_LAB_ENABLED=true
+export CHAOS_AGENT_TOKEN=$(openssl rand -hex 24)
+docker compose --profile e2e up -d --build
+bin/seed-portfolio.sh            # 28 sitios del emulador en config/sites.php
+# abrir http://127.0.0.1:8080/lab
+```
+
+- **Contenedores**: sube, baja o reinicia los fixtures y el `portfolio-emulator`.
+- **Sitios**: cambia el modo de falla de cada sitio emulado: Normal, Caído (sin respuesta), Error 500, Lento (más de 10 s), WP degradado (403 en `/wp-json`) o Intermitente (falla 1 de cada 3 chequeos).
+- **Escenarios**: caída total, error 500, sitio lento, WP degradado, falla intermitente e incidente masivo (5 sitios a la vez).
+- **Forzar chequeo ahora**: corre `chaos:check` (collector + notificaciones) sin esperar al scheduler. Para *WP degradado* se fuerza el análisis profundo.
+- **Alertas** e **Historial** se leen de `notification_log` y `chaos_experiments`. El historial se exporta a CSV.
+
+Seguridad: solo el servicio `chaos-agent` monta el socket de Docker, y únicamente sube/baja los contenedores de su lista blanca (`CHAOS_CONTAINERS`) con el token compartido. Sin `CHAOS_LAB_ENABLED=true`, `/lab` responde 404.
+
 ---
 
 ## Equipo & Créditos

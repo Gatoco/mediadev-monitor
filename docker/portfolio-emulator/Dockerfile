@@ -10,4 +10,7 @@ COPY router.php /app/router.php
 
 # El monitor consulta http://<sitio>:80 — escuchar en 80, no en el default.
 EXPOSE 80
+# Varios workers: un sitio en modo "caido"/"lento" duerme 12-15 s y no debe
+# bloquear al resto de los sitios emulados.
+ENV PHP_CLI_SERVER_WORKERS=8
 CMD ["php", "-S", "0.0.0.0:80", "/app/router.php"]

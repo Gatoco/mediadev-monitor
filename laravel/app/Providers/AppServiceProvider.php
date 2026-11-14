@@ -12,6 +12,8 @@ use App\Repositories\EloquentSiteHealthSnapshotRepository;
 use App\Repositories\EloquentSiteRepository;
 use App\Repositories\EloquentUptimeCheckRepository;
 use App\Repositories\EloquentVersionSnapshotRepository;
+use App\Services\Chaos\ContainerAgent;
+use App\Services\Chaos\FaultModes;
 use App\Support\SiteConfig;
 use Domain\Collector\Collector;
 use Domain\Infra\RestClient;
@@ -30,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Chaos Lab: clientes construidos desde config/chaos.php (sustituibles en tests).
+        $this->app->singleton(ContainerAgent::class, static fn () => ContainerAgent::fromConfig());
+        $this->app->singleton(FaultModes::class, static fn () => FaultModes::fromConfig());
+
         $this->app->singleton(SiteRepository::class, static fn () => new EloquentSiteRepository(new Site()));
         $this->app->singleton(UptimeCheckRepository::class, static fn () => new EloquentUptimeCheckRepository(new UptimeCheck()));
         $this->app->singleton(VersionSnapshotRepository::class, static fn () => new EloquentVersionSnapshotRepository(new VersionSnapshot()));

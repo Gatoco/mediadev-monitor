@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\NotificationLog;
 use App\Models\Site;
 use App\Services\Notification\MonitorEventDetector;
 use App\Services\Notification\TelegramChannel;
@@ -45,8 +46,13 @@ class NotifyStatusCommand extends Command
 
         $sendEvent = function (array $event) use (&$sent, &$failed): void {
             $text = MonitorEventDetector::render($event);
-            $ok = $this->dispatchEvent($text);
+            $channels = $this->dispatchEvent($text);
+            $ok = $channels !== [];
             $ok ? $sent++ : $failed++;
+
+            if (!$this->option('no-channels')) {
+                $this->log($event, $text, $channels);
+            }
         };
 
         // 1. Diff de eventos (down, recupero, update) — siempre.
@@ -72,15 +78,19 @@ class NotifyStatusCommand extends Command
         return count($result['events']) === 0 && (int) now()->format('i') < 5;
     }
 
-    /** Despacha un evento a Telegram y email. Retorna true si al menos uno pasó. */
-    private function dispatchEvent(string $text): bool
+    /**
+     * Despacha un evento a Telegram y email.
+     *
+     * @return array<int, string> canales que aceptaron el mensaje (vacío = ninguno)
+     */
+    private function dispatchEvent(string $text): array
     {
         if ($this->option('no-channels')) {
             $this->info($text);
-            return true;
+            return ['stdout'];
         }
 
-        $ok = false;
+        $delivered = [];
 
         // Telegram — solo canal "obligatorio".
         $telegram = new TelegramChannel(
@@ -88,17 +98,42 @@ class NotifyStatusCommand extends Command
             chatId: config('notifications.telegram.chat_id'),
             apiBase: config('notifications.telegram.api_base', 'https://api.telegram.org'),
         );
-        if ($telegram->enabled()) {
-            $ok = $telegram->send($text) || $ok;
+        if ($telegram->enabled() && $telegram->send($text)) {
+            $delivered[] = 'telegram';
         }
 
         // Email — solo si hay destinatarios configurados.
         $email = new EmailChannel(recipients: config('notifications.emails'));
         if ($email->enabled()) {
             $subject = strtok($text, "\n") ?: 'Evento SemaOPS';
-            $ok = $email->send($subject, $text) || $ok;
+            if ($email->send($subject, $text)) {
+                $delivered[] = 'email';
+            }
         }
 
-        return $ok;
+        return $delivered;
+    }
+
+    /**
+     * Deja constancia de la alerta (la lee el Chaos Lab para medir tiempos).
+     *
+     * @param array<string, mixed> $event
+     * @param array<int, string> $channels
+     */
+    private function log(array $event, string $text, array $channels): void
+    {
+        $siteId = isset($event['url'])
+            ? Site::query()->where('url', $event['url'])->value('id')
+            : null;
+
+        NotificationLog::create([
+            'site_id' => $siteId,
+            'kind' => (string) ($event['kind'] ?? 'info'),
+            'site_name' => $event['site'] ?? null,
+            'text' => $text,
+            'channels' => implode(',', $channels),
+            'delivered' => $channels !== [],
+            'sent_at' => now(),
+        ]);
     }
 }

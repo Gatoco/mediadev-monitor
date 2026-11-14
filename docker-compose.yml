@@ -33,6 +33,8 @@ services:
       # Repo root config (el bridge config/mediadev.php resuelve <repo-root>/config/)
       - ./config/sites.php:/app/config/sites.php:ro
       - ./config/auth.php:/app/config/auth.php:ro
+      # Chaos Lab: modos de falla compartidos con el portfolio-emulator.
+      - chaos-state:/var/lib/mediadev/chaos
     environment:
       # DB compartida con el volumen; el .env de Laravel apunta aquí.
       - DB_DATABASE=/var/lib/mediadev/data/mediadev.sqlite
@@ -50,6 +52,12 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME:-null}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-null}
       - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-mediadev@localhost}
+      # Chaos Lab (/lab): solo con el stack de clones (--profile e2e).
+      # Sin CHAOS_LAB_ENABLED=true la ruta /lab responde 404.
+      - CHAOS_LAB_ENABLED=${CHAOS_LAB_ENABLED:-false}
+      - CHAOS_AGENT_URL=http://chaos-agent:8090
+      - CHAOS_AGENT_TOKEN=${CHAOS_AGENT_TOKEN:-}
+      - CHAOS_MODES_FILE=/var/lib/mediadev/chaos/modes.json
     depends_on:
       mysql:
         condition: service_healthy
@@ -202,6 +210,10 @@ services:
     container_name: mediadev-portfolio
     profiles: [e2e]
     restart: unless-stopped
+    environment:
+      - CHAOS_MODES_FILE=/chaos/modes.json
+    volumes:
+      - chaos-state:/chaos:ro
     networks:
       net-sites:
         aliases:
@@ -242,6 +254,23 @@ services:
       net-sites:
         aliases:
           - hotelvivomontana.cl
+
+  # --- Chaos Lab: único servicio con acceso al socket de Docker ---
+  # Solo sube/baja los contenedores de CHAOS_CONTAINERS (lista blanca) y exige
+  # el token compartido con el monitor. Sin puertos publicados: solo lo
+  # alcanza el monitor por net-monitor.
+  chaos-agent:
+    build: ./docker/chaos-agent
+    container_name: mediadev-chaos-agent
+    profiles: [e2e]
+    restart: unless-stopped
+    networks:
+      - net-monitor
+    environment:
+      - CHAOS_AGENT_TOKEN=${CHAOS_AGENT_TOKEN:-}
+      - CHAOS_CONTAINERS=mediadev-wp-full,mediadev-wp-outdated,mediadev-wp-hardened,mediadev-non-wp,mediadev-down,mediadev-portfolio
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
   # --- wp-cli oneshots (crean usuario monitor + AP en cada fixture WP) ---
   # Escriben el token en /ap-tokens/<FIXTURE_NAME>.token (volumen compartido D6).
@@ -341,3 +370,4 @@ volumes:
   wp-outdated-html:
   wp-hardened-html:
   ap-tokens:
+  chaos-state:

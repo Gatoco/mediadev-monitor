@@ -62,6 +62,50 @@ if (!isset($profiles[$host])) {
 $profile = $profiles[$host];
 $path    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
+// ------------------------------------------------------------- chaos lab
+// Modo de falla por sitio, escrito por el Chaos Lab en el volumen compartido
+// (CHAOS_MODES_FILE: { "<host>": "<modo>" }). Sin archivo = todo Normal.
+$modesFile = getenv('CHAOS_MODES_FILE') ?: '/chaos/modes.json';
+$modes = is_file($modesFile) ? (json_decode((string) @file_get_contents($modesFile), true) ?: []) : [];
+$mode = is_array($modes) ? ($modes[$host] ?? 'normal') : 'normal';
+
+switch ($mode) {
+    case 'caido':
+        // Sin respuesta: se queda colgado más que el timeout del monitor (10 s).
+        sleep(15);
+        exit;
+    case 'error500':
+        http_response_code(500);
+        header('Content-Type: text/plain');
+        exit("500 Internal Server Error (chaos lab)
+");
+    case 'lento':
+        // Responde, pero después del timeout del monitor (10 s).
+        sleep(12);
+        break;
+    case 'degradado':
+        // La home responde; la API REST queda prohibida (403) como un WP endurecido.
+        if (str_starts_with($path, '/wp-json') || str_starts_with($path, '/index.php/wp-json')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            exit(json_encode(['code' => 'rest_forbidden', 'message' => 'chaos lab']));
+        }
+        break;
+    case 'intermitente':
+        // Falla 1 de cada 3 requests a la home (los chequeos de uptime).
+        if ($path === '/') {
+            $counter = sys_get_temp_dir() . '/chaos-' . md5($host);
+            $n = (int) @file_get_contents($counter) + 1;
+            @file_put_contents($counter, (string) $n);
+            if ($n % 3 === 0) {
+                http_response_code(500);
+                exit("500 Internal Server Error (chaos lab, intermitente)
+");
+            }
+        }
+        break;
+}
+
 // ------------------------------------------------------------- helpers
 function json_out(array $data, int $status = 200): void
 {
