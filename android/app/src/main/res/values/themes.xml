@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.ChaosLab" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#080a0f</item>
+        <item name="android:statusBarColor">#080a0f</item>
+        <item name="android:navigationBarColor">#080a0f</item>
+        <item name="android:colorAccent">#2fb57c</item>
+    </style>
+</resources>
