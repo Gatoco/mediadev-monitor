@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\ChaosLabController;
 use App\Http\Controllers\StatusController;
+use App\Http\Middleware\EnsureChaosAppToken;
 use App\Http\Middleware\EnsureChaosLabEnabled;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
 // Única interfaz: SemaOPS Mission Control (kiosko F11) + su feed JSON.
@@ -31,4 +33,14 @@ Route::prefix('lab')
             Route::get('/alerts', [ChaosLabController::class, 'alerts'])->name('alerts');
             Route::get('/history', [ChaosLabController::class, 'history'])->name('history');
         });
+
+        // App Android: token propio (CHAOS_APP_TOKEN) en vez de sesión + CSRF.
+        Route::prefix('app')->name('app.')
+            ->middleware(EnsureChaosAppToken::class)
+            ->withoutMiddleware(ValidateCsrfToken::class)
+            ->group(function () {
+                Route::get('/containers', [ChaosLabController::class, 'appContainers'])->name('containers');
+                Route::post('/containers/{service}/{action}', [ChaosLabController::class, 'appContainer'])
+                    ->whereIn('action', ['start', 'stop'])->name('container');
+            });
     });

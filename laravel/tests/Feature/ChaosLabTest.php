@@ -172,4 +172,40 @@ class ChaosLabTest extends TestCase
     {
         $this->get('/lab')->assertOk()->assertSee('Chaos Lab');
     }
+
+    public function test_app_api_requires_its_token(): void
+    {
+        config(['chaos.app_token' => 'secreto']);
+
+        $this->getJson('/lab/app/containers')->assertStatus(401);
+        $this->getJson('/lab/app/containers', ['Authorization' => 'Bearer otro'])->assertStatus(401);
+        $this->postJson('/lab/app/containers/wp-full/stop')->assertStatus(401);
+        $this->assertSame([], $this->calls);
+    }
+
+    public function test_app_api_is_closed_when_no_token_is_configured(): void
+    {
+        config(['chaos.app_token' => '']);
+
+        $this->getJson('/lab/app/containers', ['Authorization' => 'Bearer '])->assertStatus(401);
+    }
+
+    public function test_app_lists_and_toggles_containers_without_csrf(): void
+    {
+        config(['chaos.app_token' => 'secreto']);
+        $auth = ['Authorization' => 'Bearer secreto'];
+
+        $this->getJson('/lab/app/containers', $auth)
+            ->assertOk()
+            ->assertJsonPath('agent_ok', true)
+            ->assertJsonFragment(['service' => 'wp-full', 'container' => 'mediadev-wp-full', 'container_state' => 'running'])
+            ->assertJsonFragment(['service' => 'portfolio-down']);
+
+        $this->postJson('/lab/app/containers/wp-full/stop', [], $auth)->assertOk();
+        $this->postJson('/lab/app/containers/wp-full/start', [], $auth)->assertOk();
+        $this->postJson('/lab/app/containers/wp-full/restart', [], $auth)->assertNotFound();
+        $this->postJson('/lab/app/containers/mysql/stop', [], $auth)->assertStatus(422);
+
+        $this->assertSame(['stop mediadev-wp-full', 'start mediadev-wp-full'], $this->calls);
+    }
 }

@@ -57,6 +57,7 @@ services:
       - CHAOS_LAB_ENABLED=${CHAOS_LAB_ENABLED:-false}
       - CHAOS_AGENT_URL=http://chaos-agent:8090
       - CHAOS_AGENT_TOKEN=${CHAOS_AGENT_TOKEN:-}
+      - CHAOS_APP_TOKEN=${CHAOS_APP_TOKEN:-}
       - CHAOS_MODES_FILE=/var/lib/mediadev/chaos/modes.json
     depends_on:
       mysql:
@@ -268,7 +269,7 @@ services:
       - net-monitor
     environment:
       - CHAOS_AGENT_TOKEN=${CHAOS_AGENT_TOKEN:-}
-      - CHAOS_CONTAINERS=mediadev-wp-full,mediadev-wp-outdated,mediadev-wp-hardened,mediadev-non-wp,mediadev-down,mediadev-portfolio
+      - CHAOS_CONTAINERS=mediadev-wp-full,mediadev-wp-outdated,mediadev-wp-hardened,mediadev-non-wp,mediadev-down,mediadev-portfolio,mediadev-portfolio-down
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 

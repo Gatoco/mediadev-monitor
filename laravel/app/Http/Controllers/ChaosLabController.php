@@ -55,19 +55,7 @@ class ChaosLabController
         $states = $this->agent->states();
         $modes = $this->modes->all();
 
-        $containers = collect(config('chaos.containers'))->map(function (array $def, string $service) use ($sitesByHost, $states) {
-            $sites = collect($def['hosts'])->map(fn ($h) => $sitesByHost->get($h))->filter();
-            $worst = $sites->map(fn (Site $s) => $this->stateOf($s))
-                ->sortByDesc(fn ($s) => self::SEVERITY[$s] ?? 2)
-                ->first();
-
-            return [
-                'service' => $service,
-                'container_state' => $states[$def['container']] ?? 'unknown',
-                'monitor_state' => $worst ?? 'unmonitored',
-                'sites' => $sites->count(),
-            ];
-        })->values();
+        $containers = $this->containers($sitesByHost, $states);
 
         $sites = collect(config('chaos.emulated_hosts'))->map(fn (string $host) => [
             'host' => $host,
@@ -197,6 +185,51 @@ class ChaosLabController
             }
             fclose($out);
         }, 'chaos-lab-historial.csv', ['Content-Type' => 'text/csv; charset=utf-8']);
+    }
+
+    /** Pantalla única de la app Android: contenedores y su estado. */
+    public function appContainers(): JsonResponse
+    {
+        $states = $this->agent->states();
+        $sitesByHost = Site::query()->get()->keyBy(fn (Site $s) => ChaosLab::hostOf($s->url));
+
+        return response()->json([
+            'now' => now()->toIso8601String(),
+            'agent_ok' => $states !== [],
+            'containers' => $this->containers($sitesByHost, $states),
+        ]);
+    }
+
+    /** Encender/apagar desde la app. Apagar abre un experimento igual que la web. */
+    public function appContainer(string $service, string $action): JsonResponse
+    {
+        return $this->attempt(function () use ($service, $action) {
+            $action === 'stop' ? $this->lab->stopContainer($service) : $this->lab->startContainer($service);
+
+            return ['ok' => true];
+        });
+    }
+
+    /**
+     * @param \Illuminate\Support\Collection<string, Site> $sitesByHost
+     * @param array<string, string> $states
+     */
+    private function containers($sitesByHost, array $states): \Illuminate\Support\Collection
+    {
+        return collect(config('chaos.containers'))->map(function (array $def, string $service) use ($sitesByHost, $states) {
+            $sites = collect($def['hosts'])->map(fn ($h) => $sitesByHost->get($h))->filter();
+            $worst = $sites->map(fn (Site $s) => $this->stateOf($s))
+                ->sortByDesc(fn ($s) => self::SEVERITY[$s] ?? 2)
+                ->first();
+
+            return [
+                'service' => $service,
+                'container' => $def['container'],
+                'container_state' => $states[$def['container']] ?? 'unknown',
+                'monitor_state' => $worst ?? 'unmonitored',
+                'sites' => $sites->count(),
+            ];
+        })->values();
     }
 
     private function stateOf(Site $site): string

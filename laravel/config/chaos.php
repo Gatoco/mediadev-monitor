@@ -32,6 +32,9 @@ return [
     'agent_url' => env('CHAOS_AGENT_URL', 'http://chaos-agent:8090'),
     'agent_token' => env('CHAOS_AGENT_TOKEN', ''),
 
+    // Token Bearer de la app Android (/lab/app/*). Vacío = app deshabilitada.
+    'app_token' => env('CHAOS_APP_TOKEN', ''),
+
     // Archivo compartido con el portfolio-emulator (volumen chaos-state):
     // { "<host>": "<modo>" }. El emulador lo lee en cada request.
     'modes_file' => env('CHAOS_MODES_FILE', '/var/lib/mediadev/chaos/modes.json'),
@@ -50,6 +53,7 @@ return [
         'non-wp' => ['container' => 'mediadev-non-wp', 'hosts' => ['non-wp']],
         'down' => ['container' => 'mediadev-down', 'hosts' => ['down']],
         'portfolio-emulator' => ['container' => 'mediadev-portfolio', 'hosts' => $emulated],
+        'portfolio-down' => ['container' => 'mediadev-portfolio-down', 'hosts' => ['hotelvivomontana.cl']],
     ],
 
     // Sitios atendidos por el portfolio-emulator (admiten modo de falla).
