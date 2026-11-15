@@ -243,6 +243,8 @@ bin/seed-portfolio.sh            # 28 sitios del emulador en config/sites.php
 
 Seguridad: solo el servicio `chaos-agent` monta el socket de Docker, y únicamente sube/baja los contenedores de su lista blanca (`CHAOS_CONTAINERS`) con el token compartido. Sin `CHAOS_LAB_ENABLED=true`, `/lab` responde 404.
 
+**App Android** (`android/`): una pantalla para encender y apagar los contenedores de clones, autenticada con `CHAOS_APP_TOKEN`. El funcionamiento del chaos-agent, la conexión App → panel → Docker y el despliegue están en [docs/chaos-agent.md](docs/chaos-agent.md).
+
 ---
 
 ## Equipo & Créditos
