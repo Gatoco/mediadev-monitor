@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# mediadev-demo — un solo comando para la demo en vivo (podman o docker, sin internet durante la demo).
+#   mediadev-demo          levanta Mission Control con los 28 sitios del portafolio, abre el kiosko
+#                          y muestra el enlace del control remoto y del APK para el celular
+#   mediadev-demo --stop   apaga la demo
+#   mediadev-demo --no-browser  solo el backend (lo usa mediadev-cli)
+set -euo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+cd "$ROOT"
+ENGINE="$(command -v podman || command -v docker || true)"
+[ -n "$ENGINE" ] || { echo "Necesitas podman o docker" >&2; exit 1; }
+NAME=mediadev-demo
+IMAGE=localhost/mediadev/monitor-demo
+PORT="${PORT:-8080}"
+
+if [ "${1:-}" = "--stop" ]; then "$ENGINE" rm -f "$NAME" >/dev/null; echo "Demo detenida"; exit 0; fi
+BROWSER=1; [ "${1:-}" = "--no-browser" ] && BROWSER=0   # mediadev-cli usa el backend sin abrir el kiosko
+
+# Clave del control remoto: la misma que va dentro del APK (android/build.sh).
+[ -s config/demo-token ] || head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n' > config/demo-token
+TOKEN="$(cat config/demo-token)"
+[ -f config/sites.php ] || cp config/sites.demo.php config/sites.php
+[ -f config/auth.php ] || cp config/auth.example.php config/auth.php
+
+echo "» Construyendo la imagen (la primera vez tarda unos minutos)…"
+"$ENGINE" build --network host -t "$IMAGE" . >/tmp/mediadev-demo-build.log 2>&1 \
+  || { tail -20 /tmp/mediadev-demo-build.log; exit 1; }
+
+TS_IP="$(tailscale ip -4 2>/dev/null | head -1 || true)"
+PUBLISH=(-p "127.0.0.1:${PORT}:8080")
+[ -n "$TS_IP" ] && PUBLISH+=(-p "${TS_IP}:${PORT}:8080")
+
+"$ENGINE" rm -f "$NAME" >/dev/null 2>&1 || true
+"$ENGINE" run -d --name "$NAME" "${PUBLISH[@]}" \
+  -e DEMO_TOKEN="$TOKEN" -e DEMO_OFFLINE=1 \
+  -v "$ROOT/config:/app/config:ro,Z" \
+  "$IMAGE" >/dev/null
+
+printf '» Esperando el panel '
+for _ in $(seq 1 60); do curl -fs -o /dev/null "http://127.0.0.1:${PORT}/" && break; printf '.'; sleep 2; done
+curl -fs -o /dev/null "http://127.0.0.1:${PORT}/" || { echo; "$ENGINE" logs --tail 30 "$NAME"; exit 1; }
+echo ' listo'
+
+HOST="${TS_IP:-127.0.0.1}"
+cat <<EOF
+
+  ┌─ SemaOPS · demo en vivo ───────────────────────────────
+  │ Pantalla grande : http://127.0.0.1:${PORT}/
+  │ Control celular : http://${HOST}:${PORT}/demo?k=${TOKEN}
+  │ APK (instalar)  : http://${HOST}:${PORT}/semaops-control.apk
+  │ Versión terminal: mediadev-cli
+  │ Apagar la demo  : $(basename "$0") --stop
+  └────────────────────────────────────────────────────────
+EOF
+[ -z "$TS_IP" ] && echo "  (Tailscale no está activo: el celular no podrá conectarse)"
+
+# Si el celular está conectado por USB con depuración, instala el APK directo.
+if command -v adb >/dev/null && adb get-state >/dev/null 2>&1 && [ -f laravel/public/semaops-control.apk ]; then
+  adb install -r laravel/public/semaops-control.apk >/dev/null && echo "  APK instalado en el celular por USB"
+fi
+
+if [ "$BROWSER" = 1 ] && [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
+  URL="http://127.0.0.1:${PORT}/"
+  for b in chromium-browser chromium google-chrome-stable firefox; do
+    command -v "$b" >/dev/null || continue
+    case "$b" in
+      firefox) nohup firefox --kiosk "$URL" >/dev/null 2>&1 & ;;
+      *) nohup "$b" --kiosk --noerrdialogs --disable-infobars --user-data-dir="${TMPDIR:-/tmp}/mediadev-demo-profile" "$URL" >/dev/null 2>&1 & ;;
+    esac
+    break
+  done
+fi

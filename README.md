@@ -109,6 +109,7 @@ docker compose up -d
 **2. Abrir el panel**
 
 - Mission Control: <http://localhost:8080/> (F11 para kiosko). Atajo de feria: `bin/mediadev-feria` (`--share` lo publica en Tailscale, `--remote` abre el de otro equipo, `--no-build`, `--stop`)
+- Control de demo desde el celular: `bin/mediadev-feria --share` imprime `http://<ip-tailscale>:8080/demo?k=<clave>` (clave en `~/.config/mediadev-monitor/demo-token`, o `DEMO_TOKEN`). Desde ahí apagas/enciendes sitios y lanzas escenarios (cascada, crisis, apagón) y Mission Control los refleja en ~1,5 s. Es solo visual: no toca datos reales ni envía alertas. Sin `DEMO_TOKEN` las rutas `/demo*` responden 404.
 
 **3. (Opcional) Emulador de portafolio**
 

@@ -17,3 +17,9 @@ vendor/
 
 # Tooling local (skill registry cache)
 .atl/
+
+# APK compilado (lleva la clave de la demo) y su keystore
+laravel/public/*.apk*
+android/build/
+android/*.keystore
+config/demo-token

@@ -21,7 +21,20 @@ else
     printf 'DB_DATABASE=%s\n' "${DB_FILE}" >> .env
 fi
 
+# artisan serve y cron tampoco heredan las variables de la demo: van al .env igual que DB_DATABASE.
+for VAR in DEMO_TOKEN DEMO_OFFLINE; do
+    sed -i "/^${VAR}=/d" .env
+    VAL="$(printenv "$VAR" || true)"
+    [ -n "$VAL" ] && printf '%s=%s\n' "$VAR" "$VAL" >> .env
+done
+
+mkdir -p "$(dirname "$DB_FILE")" && touch "$DB_FILE"
 php artisan migrate --force
+
+# Demo sin internet: telemetría sintética en vez de checks reales.
+if [ -n "${DEMO_OFFLINE:-}" ]; then
+    php artisan demo:seed
+fi
 
 # Cron NO hereda las env de compose (PATH mínimo). Con DB_DATABASE ya en
 # .env, schedule:run usa la misma DB que el web — solo falta php absoluto.

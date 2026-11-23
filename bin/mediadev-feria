@@ -11,18 +11,30 @@ URL="${FERIA_URL:-http://127.0.0.1:8080/}"
 cd "$ROOT"
 COMPOSE=(docker compose)
 
+# Clave del control remoto de la demo: estable entre ejecuciones para poder guardar el enlace en el celular.
+TOKEN_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/mediadev-monitor/demo-token"
+if [ -z "${DEMO_TOKEN:-}" ]; then
+  [ -s "$TOKEN_FILE" ] || { mkdir -p "$(dirname "$TOKEN_FILE")"; head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$TOKEN_FILE"; }
+  DEMO_TOKEN="$(cat "$TOKEN_FILE")"
+fi
+export DEMO_TOKEN
+
+build() {
+  # compose build no puede pasar --allow; el Dockerfile usa network: host (ver docker-compose.yml)
+  docker compose build --print monitor | docker buildx bake --allow=network.host -f - --load monitor
+}
+
 case "${1:-}" in
   --remote) URL="${FERIA_URL:-http://${FERIA_HOST:-100.66.97.18}:8080/}" ;;
   --stop) docker compose stop monitor; exit 0 ;;
   --share)
     export TS_IP="$(tailscale ip -4 | head -1)"
     COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.tailscale.yml)
-    "${COMPOSE[@]}" up -d monitor ;;
+    build
+    "${COMPOSE[@]}" up -d monitor
+    echo "Control de demo en el celular: http://${TS_IP}:8080/demo?k=${DEMO_TOKEN}" ;;
   --no-build) docker compose up -d monitor ;;
-  *)
-    # compose build no puede pasar --allow; el Dockerfile usa network: host (ver docker-compose.yml)
-    docker compose build --print monitor | docker buildx bake --allow=network.host -f - --load monitor
-    docker compose up -d monitor ;;
+  *) build; docker compose up -d monitor ;;
 esac
 
 printf 'Esperando %s ' "$URL"

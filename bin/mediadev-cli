@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""mediadev-cli — SemaOPS Mission Control in the terminal.
+
+Reads the same /status.json the big screen reads (real telemetry + the phone's demo overlay),
+so the phone remote drives this view too. Starts the demo backend if it is not running.
+
+  mediadev-cli                 live view (Ctrl+C to quit)
+  mediadev-cli --once          print one snapshot and exit (exit code 1 if any site is down)
+  mediadev-cli --url URL       watch another monitor (default http://127.0.0.1:8080)
+"""
+import argparse
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import time
+import urllib.request
+from datetime import datetime
+
+ESC = "\033["
+C = {
+    "ok": ESC + "38;5;42m", "warn": ESC + "38;5;214m", "down": ESC + "38;5;203m", "nonwp": ESC + "38;5;245m",
+    "dim": ESC + "38;5;240m", "mid": ESC + "38;5;250m", "hi": ESC + "1;38;5;255m", "rst": ESC + "0m",
+    "bgdown": ESC + "48;5;52m",
+}
+TONE = {"wp-full": "ok", "wp-degraded": "warn", "down": "down", "non-wp": "nonwp", "unknown": "dim"}
+LABEL = {"wp-full": "EN LÍNEA", "wp-degraded": "LENTO", "down": "CAÍDO", "non-wp": "NO-WP", "unknown": "SIN DATOS"}
+BARS = "▁▂▃▄▅▆▇█"
+
+
+def fetch(url):
+    with urllib.request.urlopen(url + "/status.json", timeout=4) as r:
+        return json.load(r)
+
+
+def ensure_backend(url):
+    try:
+        fetch(url)
+        return
+    except Exception:
+        pass
+    demo = os.path.join(os.path.dirname(os.path.realpath(__file__)), "mediadev-demo")
+    print("» El monitor no está corriendo: levantándolo…", flush=True)
+    subprocess.run([demo, "--no-browser"], check=True)
+
+
+def merged(data):
+    """Apply the phone overlay exactly like the big screen does."""
+    overlay = (data.get("demo") or {}).get("sites") or {}
+    if isinstance(overlay, list):
+        overlay = {}
+    out = []
+    for s in data["sites"]:
+        st = overlay.get(str(s["id"]), s["state"])
+        ms = s.get("last_ms")
+        if st == "down":
+            ms = None
+        elif st == "wp-degraded" and overlay.get(str(s["id"])) and ms is not None:
+            ms = round(ms * 5)
+        out.append({**s, "state": st, "ms": ms})
+    return out
+
+
+def spark(buckets, width=16):
+    vals = [b.get("avg_ms") for b in (buckets or []) if b.get("avg_ms") is not None][-width:]
+    if len(vals) < 2:
+        return " " * width
+    lo, hi = min(vals), max(vals)
+    span = max(1, hi - lo)
+    return "".join(BARS[int((v - lo) / span * (len(BARS) - 1))] for v in vals).rjust(width)
+
+
+def color(tone, text):
+    return C[tone] + text + C["rst"]
+
+
+def site_line(s, width):
+    tone = TONE.get(s["state"], "dim")
+    name = s["name"][: width - 52].ljust(width - 52) if width > 70 else s["name"][:20].ljust(20)
+    dot = color(tone, "●")
+    ms = "  — ms" if s["ms"] is None else f"{s['ms']:>4} ms"
+    ver = f"WP {s['core_version']}" if s.get("core_version") else ("no-WP" if s["state"] == "non-wp" else "")
+    up = f"{s['uptime_24h']:>5}%" if s.get("uptime_24h") is not None else "    —"
+    line = f" {dot} {name} {color(tone, LABEL.get(s['state'], s['state']).ljust(9))} {color(tone if s['ms'] is None or s['state'] != 'wp-full' else 'mid', ms)}  {color(tone, spark(s.get('sparkline')))} {C['dim']}{ver:<9}{up}{C['rst']}"
+    return line
+
+
+def render(sites, events, url, cols, rows):
+    total = len(sites) or 1
+    n = {k: sum(1 for s in sites if s["state"] == k) for k in TONE}
+    online = n["wp-full"] + n["non-wp"]
+    pct = round(online / total * 100)
+    lat = [s["ms"] for s in sites if s["ms"] is not None]
+    avg = f"{round(sum(lat) / len(lat))} ms" if lat else "—"
+    worst = "down" if n["down"] else "warn" if n["wp-degraded"] else "ok"
+
+    out = []
+    now = datetime.now().strftime("%H:%M:%S")
+    title = f"{C['hi']} SEMA{C['rst']}{color('ok', 'OPS')}{C['hi']} // MISSION CONTROL{C['rst']}"
+    out.append(f"{title}{' ' * max(1, cols - 38 - len(now))}{C['dim']}{now}{C['rst']}")
+    out.append(color("dim", "─" * cols))
+
+    bar_w = max(10, min(40, cols - 70))
+    filled = round(bar_w * online / total)
+    bar = color(worst, "█" * filled) + color("dim", "░" * (bar_w - filled))
+    out.append(
+        f" {color(worst, f'{pct:>3}%')} operativo  {bar}   "
+        f"{color('ok', str(online))} en línea  {color('warn', str(n['wp-degraded']))} lentos  "
+        f"{color('down', str(n['down']))} caídos   latencia media {C['hi']}{avg}{C['rst']}"
+    )
+    out.append(color("dim", "─" * cols))
+
+    # Two columns when the terminal is wide enough
+    two = cols >= 150
+    colw = cols // 2 - 1 if two else cols
+    lines = [site_line(s, colw) for s in sites]
+    if two:
+        half = (len(lines) + 1) // 2
+        left, right = lines[:half], lines[half:]
+        for i in range(half):
+            l = left[i]
+            pad = colw - visible_len(l)
+            out.append(l + " " * max(1, pad) + (right[i] if i < len(right) else ""))
+    else:
+        out.extend(lines)
+
+    out.append(color("dim", "─" * cols))
+    out.append(f" {C['mid']}EVENTOS{C['rst']}")
+    room = max(3, rows - len(out) - 2)
+    shown = events[-room:] if events else [(None, "dim", "Sin cambios de estado desde que abriste la vista")]
+    for ts, tone, text in reversed(shown):
+        out.append(f"  {C['dim']}{ts or '        '}{C['rst']}  {color(tone, text)}")
+    out.append(color("dim", f" {url}  ·  actualiza cada 1,5 s  ·  Ctrl+C para salir"))
+    return out
+
+
+def visible_len(s):
+    import re
+    return len(re.sub(r"\033\[[0-9;]*m", "", s))
+
+
+def diff(prev, cur, events):
+    if prev is None:
+        return
+    before = {s["id"]: s for s in prev}
+    ts = datetime.now().strftime("%H:%M:%S")
+    for s in cur:
+        b = before.get(s["id"])
+        if b and b["state"] != s["state"]:
+            tone = TONE.get(s["state"], "dim")
+            verb = {"down": "cayó · sin respuesta HTTP", "wp-degraded": "responde lento", "wp-full": "recuperado", "non-wp": "recuperado"}.get(s["state"], s["state"])
+            events.append((ts, tone, f"{s['name']} {verb}"))
+    del events[:-50]
+
+
+def main():
+    ap = argparse.ArgumentParser(description="SemaOPS Mission Control en la terminal")
+    ap.add_argument("--url", default=os.environ.get("MEDIADEV_URL", "http://127.0.0.1:8080"))
+    ap.add_argument("--once", action="store_true", help="una sola foto y salir (código 1 si hay caídos)")
+    args = ap.parse_args()
+    url = args.url.rstrip("/")
+
+    if args.once:
+        sites = merged(fetch(url))
+        cols = shutil.get_terminal_size((120, 40)).columns
+        print("\n".join(render(sites, [], url, cols, 999)[:-3]))
+        sys.exit(1 if any(s["state"] == "down" for s in sites) else 0)
+
+    if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+        ensure_backend(url)
+
+    sys.stdout.write("\033[?1049h\033[?25l")  # alternate screen, hide cursor
+    restore = lambda *_: (sys.stdout.write("\033[?25h\033[?1049l"), sys.stdout.flush(), sys.exit(0))
+    signal.signal(signal.SIGINT, restore)
+    signal.signal(signal.SIGTERM, restore)
+
+    prev, events = None, []
+    while True:
+        size = shutil.get_terminal_size((120, 40))
+        try:
+            cur = merged(fetch(url))
+            diff(prev, cur, events)
+            prev = cur
+            frame = render(cur, events, url, size.columns, size.lines)
+        except Exception as e:  # keep the view alive if the monitor restarts
+            frame = [color("down", f" Sin conexión con el monitor ({url}): {e}"), color("dim", " reintentando…")]
+        sys.stdout.write("\033[H\033[2J" + "\n".join(frame[: size.lines - 1]))
+        sys.stdout.flush()
+        time.sleep(1.5)
+
+
+if __name__ == "__main__":
+    main()

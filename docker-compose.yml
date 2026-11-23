@@ -36,6 +36,8 @@ services:
     environment:
       # DB compartida con el volumen; el .env de Laravel apunta aquí.
       - DB_DATABASE=/var/lib/mediadev/data/mediadev.sqlite
+      # Control remoto de la demo (/demo?k=<token>). Vacío = desactivado; bin/mediadev-feria lo genera.
+      - DEMO_TOKEN=${DEMO_TOKEN:-}
       # Agente de notificaciones (config/notifications.php los consume).
       # Vacíos = canal deshabilitado. Ver laravel/.env.example.
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
