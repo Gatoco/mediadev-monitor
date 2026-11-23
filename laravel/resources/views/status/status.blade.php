@@ -271,20 +271,10 @@
 
         <aside class="panel side" aria-labelledby="sim-title">
             <div class="panel-head">
-                <h2 id="sim-title">Demo interactiva</h2>
-                <span class="meta">toca un sitio de la matriz</span>
+                <h2 id="sim-title">Incidentes en vivo</h2>
+                <span class="meta">diagnóstico asistido</span>
             </div>
-            <p class="sim-note">Simulación local: no modifica datos reales ni envía alertas</p>
-            <div class="target" id="target" data-state="unknown">
-                <span class="led" aria-hidden="true"></span>
-                <span class="target-name" id="target-name">—</span>
-                <span class="target-state" id="target-state"></span>
-            </div>
-            <div class="actions">
-                <button type="button" class="btn btn-primary" id="btn-fail">Simular caída</button>
-                <button type="button" class="btn" id="btn-heal" disabled>Re-verificar y reparar</button>
-            </div>
-            <div class="console" id="console" aria-live="polite" aria-label="Consola de diagnóstico asistido"><div class="c-dim">Diagnóstico asistido · esperando un incidente</div></div>
+            <div class="console" style="margin-top:12px" id="console" aria-live="polite" aria-label="Consola de diagnóstico asistido"><div class="c-dim">Diagnóstico asistido · esperando un incidente</div></div>
             <p class="events-title">Eventos</p>
             <ol class="events" id="events" aria-live="polite"><li class="empty">Sin cambios de estado desde que abriste el panel</li></ol>
         </aside>
@@ -307,6 +297,7 @@
     let sites = [];                 // last real payload from /status.json
     const sim = new Map();          // id -> overlay { state, failures, last_ms }; lives only in this browser
     let selectedId = null, busy = false, idleTimer = null;
+    let demoSeq = -1;               // -1 = no remote control; otherwise last phone command already mirrored
 
     const host = (url) => { try { return new URL(url).host; } catch { return url; } };
     const view = (s) => sim.has(s.id) ? { ...s, ...sim.get(s.id) } : s;
@@ -354,6 +345,7 @@
     }
 
     function renderTarget() {
+        if (!$('target')) return; // side panel shows incidents only; no manual target picker
         document.querySelectorAll('.node').forEach((n) => n.setAttribute('aria-pressed', String(Number(n.dataset.siteId) === selectedId)));
         const s = sites.find((x) => x.id === selectedId);
         if (!s) return;
@@ -378,6 +370,11 @@
 
     function setTelemetry() {
         const t = $('telemetry');
+        if (sim.size && demoSeq !== -1) {
+            t.dataset.mode = 'live';
+            $('telemetry-text').textContent = `Telemetría en vivo · ${sim.size} incidente${sim.size > 1 ? 's' : ''} activo${sim.size > 1 ? 's' : ''}`;
+            return;
+        }
         if (sim.size) {
             t.dataset.mode = 'sim';
             $('telemetry-text').textContent = `Simulación en ${sim.size} sitio${sim.size > 1 ? 's' : ''} · resto telemetría real`;
@@ -408,12 +405,42 @@
         try {
             const res = await fetch('/status.json', { headers: { Accept: 'application/json' } });
             if (!res.ok) throw new Error(res.status);
-            apply(await res.json());
+            const data = await res.json();
+            apply(data);
+            applyDemo(data.demo);
             $('footer-meta').textContent = `actualizado ${hhmmss()} · cada 5 s`;
         } catch {
             $('telemetry').dataset.mode = 'offline';
             $('telemetry-text').textContent = 'Sin conexión con el monitor';
         }
+    }
+
+    // Remote demo: the phone stores the desired state server-side and the board mirrors it.
+    // One site going down/up replays the full diagnosis animation; bulk changes apply at once.
+    function applyDemo(d) {
+        if (!d || d.seq === demoSeq || busy) return;
+        const first = demoSeq === -1;
+        demoSeq = d.seq;
+        const changes = sites
+            .map((s) => [s, d.sites[s.id] ?? null])
+            .filter(([s, want]) => (sim.get(s.id)?.state ?? null) !== want);
+        if (!changes.length) return;
+
+        const [one, want] = changes[0];
+        if (!first && changes.length === 1 && (want === 'down' || (want === null && sim.get(one.id)?.state === 'down'))) {
+            selectedId = one.id; renderTarget();
+            return want === 'down' ? simulateFailure() : heal();
+        }
+        for (const [s, w] of changes) {
+            if (w) sim.set(s.id, { state: w, failures: w === 'down' ? 3 : 0, last_ms: w === 'down' ? null : Math.round((s.last_ms ?? 120) * 5) });
+            else sim.delete(s.id);
+            renderNode(s, !first);
+        }
+        renderSummary(); renderTarget(); setTelemetry();
+        if (first) return;
+        const down = changes.filter(([, w]) => w === 'down').length, slow = changes.filter(([, w]) => w === 'wp-degraded').length;
+        logEvent(down ? 'down' : slow ? 'wp-degraded' : 'wp-full',
+            down ? `${down} sitio(s) caído(s) ` : slow ? `${slow} sitio(s) con respuesta lenta` : `${changes.length} sitio(s) recuperado(s)`);
     }
 
     // Diagnosis console: streams like a terminal, prints instantly with reduced motion
@@ -439,7 +466,7 @@
             renderNode(s, true); renderSummary(); renderTarget(); setTelemetry();
             await print(`GET https://${h}/  →  HTTP 500 Internal Server Error  (fallo ${n}/3)`, n < 3 ? 'c-warn' : 'c-err');
         }
-        logEvent('down', `${s.name}: ${LABELS[s.state]} → Caído (simulado)`);
+        logEvent('down', `${s.name}: ${LABELS[s.state]} → Caído`);
         await print('Estado DOWN · alerta lista para Telegram y correo (no se envía en modo feria)', 'c-err');
         await wait(400);
         await print('');
@@ -475,6 +502,7 @@
         clearTimeout(idleTimer);
         // Kiosk: if nobody touches the screen, the board returns to real telemetry
         idleTimer = setTimeout(() => {
+            if (demoSeq !== -1) return; // remote-controlled: the phone owns the state
             if (busy) return armIdleReset();
             sim.clear();
             sites.forEach((s) => renderNode(s, false));
@@ -489,12 +517,11 @@
         selectedId = Number(node.dataset.siteId);
         renderTarget(); armIdleReset();
     });
-    $('btn-fail').addEventListener('click', simulateFailure);
-    $('btn-heal').addEventListener('click', heal);
 
     const tickClock = () => { $('clock').textContent = hhmmss(); };
     tickClock(); setInterval(tickClock, 1000);
-    poll(); setInterval(poll, REFRESH_MS);
+    // Faster polling while remote-controlled so the phone's taps land within ~1.5 s
+    (async function loop() { await poll(); setTimeout(loop, demoSeq !== -1 ? 1500 : REFRESH_MS); })();
 })();
 </script>
 </body>

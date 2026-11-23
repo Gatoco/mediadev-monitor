@@ -24,4 +24,16 @@ return [
     */
 
     'cache_dir' => storage_path('app/mediadev'),
+
+    /*
+    | Modo demo: clave del control remoto (/demo?k=...). Vacía = desactivado.
+    */
+
+    'demo_token' => env('DEMO_TOKEN'),
+
+    /*
+    | Demo sin internet: apaga los checks programados (los datos los siembra `demo:seed`).
+    */
+
+    'demo_offline' => (bool) env('DEMO_OFFLINE', false),
 ];

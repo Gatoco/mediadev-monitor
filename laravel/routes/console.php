@@ -1,5 +1,10 @@
 <?php
 
+// Demo sin internet (DEMO_OFFLINE=1): no hay checks reales; los datos los siembra demo:seed.
+if (config('mediadev.demo_offline')) {
+    return;
+}
+
 use App\Console\Commands\CollectorDeepCommand;
 use App\Console\Commands\CollectorUptimeCommand;
 use App\Console\Commands\NotifyStatusCommand;

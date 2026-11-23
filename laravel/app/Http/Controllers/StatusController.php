@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
+use App\Support\Demo\DemoState;
 use App\Support\Uptime\UptimeHistory;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
@@ -28,7 +29,7 @@ class StatusController
         return response()->json([
             'generated_at' => now()->toIso8601String(),
             'sites' => $this->siteData(),
-        ]);
+        ] + (config('mediadev.demo_token') ? ['demo' => DemoState::get()] : []));
     }
 
     /**
